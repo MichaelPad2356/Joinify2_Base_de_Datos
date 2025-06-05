@@ -1,0 +1,50 @@
+<head>
+  <!-- FontAwesome CDN -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+
+<header class="header">
+  <div class="container header-container">
+    <div class="logo">
+      <img src="assets/imagenes/logotipo2.png" alt="Logo Joinify">
+      <h1>Joinify</h1>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a routerLink="/home" routerLinkActive="active"><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a routerLink="/about" routerLinkActive="active"><i class="fas fa-info-circle"></i> Acerca de</a></li>
+        <li><a routerLink="/features" routerLinkActive="active"><i class="fas fa-star"></i> Características</a></li>
+        <li><a routerLink="/contact" routerLinkActive="active"><i class="fas fa-envelope"></i> Contacto</a></li>
+
+        <!-- Condicional para mostrar "Crear grupo" y el nombre del usuario si está logueado -->
+        @if (isLoggedIn()) {
+          <li>
+            <a routerLink="/crear-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
+              Crear Grupo</a>
+
+              <a routerLink="/mis-grupos"  routerLinkActive="active"><i class="fas fa-user-group"></i>
+                Mis Grupos</a>
+
+                <a routerLink="/unir-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
+                  Unirme a un Grupo</a>
+                  <span class="user-profile">
+                    <span class="user-name">Hola, {{ userName }}</span>
+                    <button class="logout-btn" (click)="logout()">
+                      Cerrar Sesión <i class="fa-solid fa-right-from-bracket" style="color: #ffffff;"></i>
+                    </button>
+                </span>
+          </li>
+        }
+
+        <!-- Mostrar login si el usuario no está logueado -->
+        @if (!isLoggedIn()) {
+          <li>
+            <a routerLink="/login" class="btn-primary">
+              <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

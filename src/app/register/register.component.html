@@ -1,0 +1,128 @@
+<main class="main-content">
+    <div class="container">
+      <section class="register-section" aria-labelledby="register-title">
+        <div class="register">
+          <h2 id="register-title">Únete a Joinify</h2>
+          <p class="subtitle">Completa el formulario para comenzar a compartir tus suscripciones</p>
+  
+          <form id="register-form" class="register-form" (ngSubmit)="onSubmit()" novalidate>
+            <div class="form-group">
+              <label for="fullname">
+                <i class="fas fa-user"></i> Nombre Completo
+              </label>
+              <input 
+                type="text" 
+                id="fullname" 
+                name="fullname" 
+                placeholder="Ej: Juan Pérez" 
+                [(ngModel)]="user.fullname" 
+                required 
+                autocomplete="name"
+                minlength="2"
+                pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s]+"
+              >
+              <span class="form-error" aria-live="polite"></span>
+            </div>
+  
+            <div class="form-group">
+              <label for="email">
+                <i class="fas fa-envelope"></i> Correo Electrónico
+              </label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                placeholder="Ej: correo@dominio.com" 
+                [(ngModel)]="user.email" 
+                required 
+                autocomplete="email"
+              >
+              <span class="form-error" aria-live="polite"></span>
+            </div>
+  
+            <div class="form-group">
+              <label for="password">
+                <i class="fas fa-lock"></i> Contraseña
+              </label>
+              <input 
+                type="password" 
+                id="password" 
+                name="password" 
+                placeholder="Ingresa tu contraseña" 
+                [(ngModel)]="user.password" 
+                required
+                minlength="6"
+              >
+              <span class="form-error" aria-live="polite"></span>
+            </div>
+  
+            <button 
+                [disabled]="!isFormValid()"
+                style="
+                  width: 100%;
+                  padding: 14px 24px;
+                  background-color: #2c3e50;
+                  color: #ffffff;
+                  border: 2px solid #34495e;
+                  border-radius: 6px;
+                  font-family: 'Roboto', 'Arial', sans-serif;
+                  font-size: 16px;
+                  font-weight: 500;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  cursor: pointer;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  transition: all 0.4s ease;
+                  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+                  outline: none;
+                  position: relative;
+                  overflow: hidden;
+                  
+                "
+                onmouseover="this.style.backgroundColor='#34495e'"
+                onmouseout="this.style.backgroundColor='#2c3e50'"
+              >
+                  <i style="
+                      margin-right: 12px;
+                      font-size: 20px;
+                      position: relative;
+                      z-index: 2;
+                      transition: transform 0.3s ease;
+                  " 
+                  class="fas fa-user-plus"
+                  onmouseover="this.style.transform='scale(1.1)'"
+                  onmouseout="this.style.transform='scale(1)'"
+                  ></i> 
+                  <span style="
+                      position: relative;
+                      z-index: 2;
+                  ">
+                      Crear Cuenta
+                  </span>
+                  <span style="
+                      position: absolute;
+                      top: 0;
+                      left: 0;
+                      width: 100%;
+                      height: 100%;
+                      background-color: rgba(52, 73, 94, 0.1);
+                      opacity: 0;
+                      transition: opacity 0.4s ease;
+                      z-index: 1;
+                  " class="button-overlay"></span>
+                  <span style="
+                      margin-left: 10px;
+                      display: none;
+                      position: relative;
+                      z-index: 2;
+                  " class="button-loader"></span>
+          </button>
+
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+  

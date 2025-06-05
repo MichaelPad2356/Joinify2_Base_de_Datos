@@ -1,0 +1,50 @@
+<div class="unirgrupo-container">
+  <h2 class="page-title">Unirse a un Grupo</h2>
+
+  <div class="groups-list">
+    <!-- Mostrar los grupos disponibles con espacio -->
+    @for (grupo of gruposDisponibles; track grupo) {
+      <div class="group-card">
+        <div class="group-card-header">
+          <h3>{{ grupo.name }}</h3>
+          <span class="service-type">{{ grupo.serviceType }}</span>
+        </div>
+        <div class="group-card-body">
+          <p><strong>Usuarios:</strong> {{ grupo.currentUsers }} / {{ grupo.maxUsers }}</p>
+          <p><strong>Costo por usuario:</strong> ${{ grupo.costPerUser }}</p>
+          <p><strong>Política de pago:</strong> {{ grupo.paymentPolicy }}</p>
+        </div>
+        <div class="group-card-footer">
+          <!-- Botón para unirse al grupo -->
+          @if (grupo.currentUsers < grupo.maxUsers) {
+            <button 
+              (click)="unirseAGrupo(grupo.id)"
+              style="
+              max-width: 200px;
+              padding: 10px 20px;
+              background-color: #920500;
+              color: white;
+              border: none;
+              border-radius: 6px;
+              font-family: 'Arial', sans-serif;
+              font-size: 15px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.8px;
+              cursor: pointer;
+              transition: all 0.3s ease;
+              box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+              outline: none;
+              margin: 10px 0;">
+              Unirme al grupo
+          </button>
+          }
+          <!-- Mensaje si el grupo está lleno -->
+          @if (grupo.currentUsers >= grupo.maxUsers) {
+            <p class="full-group">Este grupo está lleno.</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Joinify</title>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <!-- Iconos de Font Awesome -->
+  </head>
+  <body>
+    <br><br><br><br>
+    <div class="login-container">
+      <div class="logo">
+        <img src="../../assets/imagenes/logotipo2.png" alt="Jonify Logo">
+      </div>
+      <h2 class="login-title">Jonify Login</h2>
+      @if (errorMessage) {
+        <div class="error-message">
+          {{ errorMessage }}
+        </div>
+      }
+      <form id="loginForm" (ngSubmit)="onLoginSubmit()">
+        
+        <div class="input-group">
+          <i class="fas fa-user"></i>
+          <input type="email" id="email" [(ngModel)]="loginData.email" name="email" placeholder="Correo electrónico" required>
+        </div>
+        
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" [(ngModel)]="loginData.password" name="password" placeholder="Password" required>
+        </div>
+        <button type="submit" class="login-btn">Login</button>
+      </form>
+      <div class="login-links">
+        <a href="#">Forgot Password?</a>
+        <a href="#" onclick="window.location.href='/register'; return false;">Sign Up</a>
+        <a href="#" onclick="window.location.href='/home'; return false;">Inicio</a>
+      </div>
+    </div>
+  </body>
+</html>

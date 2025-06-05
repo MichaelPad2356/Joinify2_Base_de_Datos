@@ -1,0 +1,83 @@
+/* Contenedor general para la página */
+.my-groups-container {
+    padding: 20px;
+    background-color: #f4f6f9;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  /* Estilo para la lista de grupos */
+  .groups-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  
+  /* Estilo para cada tarjeta de grupo */
+  .group-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .group-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  
+  .group-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .group-card-header h3 {
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
+  .group-card-header .service-type {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+  }
+  
+  .group-card-body {
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .group-card-body p {
+    margin: 5px 0;
+  }
+  
+  .group-card-footer {
+    margin-top: 15px;
+    text-align: center;
+  }
+  
+  .btn-view-details {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+  }
+  
+  .btn-view-details:hover {
+    background-color: #0056b3;
+  }
+  

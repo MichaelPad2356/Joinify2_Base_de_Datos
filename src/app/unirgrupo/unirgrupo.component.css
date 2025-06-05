@@ -1,0 +1,78 @@
+.unirgrupo-container {
+    padding: 2rem;
+    text-align: center;
+  }
+  
+  .page-title {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .groups-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .group-card {
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    text-align: left;
+    transition: transform 0.3s ease;
+  }
+  
+  .group-card:hover {
+    transform: translateY(-10px);
+  }
+  .group-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  
+  .group-card-header h3 {
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
+  .group-card-header .service-type {
+    background-color: #0a0063;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+  }
+  
+  .group-card-body {
+    margin-bottom: 1rem;
+  }
+  
+  .group-card-footer {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .btn-join {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-join:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
+  
+  .btn-join:hover {
+    background-color: #0056b3;
+  }
+  

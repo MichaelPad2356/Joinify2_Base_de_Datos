@@ -1,0 +1,70 @@
+<main>
+  <section id="hero" class="hero">
+    <div class="container hero-container">
+      <div class="hero-text">
+        <h2>Comparte y Ahorra en tus Suscripciones</h2>
+        <p>Únete a una comunidad que maximiza el ahorro en servicios de streaming y más.</p>
+        <a routerLink="/register" class="btn-primary">¡Únete Ahora!</a>
+      </div>
+    </div>
+  </section>
+  <section id="features" class="features">
+    <div class="container">
+      <h3>Nuestras Características</h3>
+      <div class="features-grid">
+        <div class="feature-card">
+          <i class="fas fa-tasks fa-2x"></i>
+          <h4>Gestión Eficiente</h4>
+          <p>Controla todas tus suscripciones desde una sola plataforma.</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-lock fa-2x"></i>
+          <h4>Pagos Seguros</h4>
+          <p>Confianza garantizada con integración a plataformas como PayPal.</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-mobile-alt fa-2x"></i>
+          <h4>Multiplataforma</h4>
+          <p>Acceso web y móvil para gestionar suscripciones en cualquier lugar.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <section id="movies" class="movies">
+    <div class="container">
+      <h3>Películas Populares</h3>
+      <div class="movies-grid">
+        @for (movie of movies; track movie) {
+          <div class="movie-card">
+            <img
+              [src]="'https://image.tmdb.org/t/p/w500' + movie.poster_path"
+              [alt]="movie.title"
+              />
+            <h4>{{ movie.title }}</h4>
+            <p>{{ movie.overview }}</p>
+            <p><strong>Fecha de estreno:</strong> {{ movie.release_date }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+
+  <br><br><br>
+
+
+
+
+  <section id="cta" class="cta">
+    <div class="container">
+      <h3>¿Listo para empezar?</h3>
+      <p>Crea tu cuenta y comienza a compartir.</p>
+      <br>
+        <a routerLink="/register" class="btn-primary">Regístrate</a>
+        <br><br>
+      </div>
+    </section>
+  </main>

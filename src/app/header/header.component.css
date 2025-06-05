@@ -1,0 +1,150 @@
+/* Header */
+.header {
+    background: #1e1e2f;
+    padding: 1rem 0;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative; /* Asegura que el contenedor esté por encima de otros elementos */
+    z-index: 10; /* Asegura que el contenedor esté por encima de otros elementos */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    width: 50px;
+    margin-right: 1rem;
+}
+
+.logo h1 {
+    color: #fff;
+}
+
+.nav-links {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Distribuye uniformemente dentro del espacio disponible */
+    gap: 1.5rem; /* Espaciado uniforme entre los elementos */
+}
+
+.nav-links li {
+    margin: 0; /* Asegura que no haya márgenes extras alrededor de los ítems */
+}
+
+.nav-links a {
+    padding: 0.5rem 1rem; /* Incrementa el área clicable */
+    border-radius: 5px; /* Mantiene un diseño consistente y limpio */
+    color: #fff;
+    text-decoration: none;
+}
+
+.nav-links li:last-child {
+    margin-left: auto; /* Empuja los elementos como "Cerrar sesión" hacia la derecha si están en la misma lista */
+}
+
+
+.nav-links a:hover {
+    color: #ff6f00;
+}
+
+.nav-links a:focus {
+    outline: none; /* Remueve el borde de enfoque, si no lo deseas */
+}
+
+.btn-primary {
+    background: #ff6f00;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    margin-right: 25px;
+    border-radius: 5px;
+    text-decoration: none;
+    transition: background 0.3s;
+    cursor: pointer; 
+}
+
+.btn-primary:hover {
+    background: #e65c00;
+}
+
+/* Hero Section */
+.hero {
+    background: linear-gradient(135deg, #ff6f00, #00aaff);
+    color: #fff;
+    padding: 4rem 0;
+}
+
+.hero-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hero-text {
+    flex: 1;
+}
+
+.hero-text h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.hero-text p {
+    margin-bottom: 2rem;
+}
+
+.hero-image {
+    flex: 1;
+}
+
+.hero-image img {
+    max-width: 100%;
+    border-radius: 10px;
+}
+
+.user-profile {
+ 
+    gap: 15px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+}
+
+.user-name {
+    color: #29cc00;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.user-name::before {
+    content: '👤';
+    font-size: 20px;
+}
+
+.logout-btn {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-right: 5px;
+    margin-left: 6px;
+    transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+}
+
+.logout-btn::after {
+    content: '⏻';
+    font-size: 18px;
+}
