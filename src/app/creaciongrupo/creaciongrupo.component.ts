@@ -41,7 +41,7 @@ export class CreaciongrupoComponent {
       userId: parseInt(userId, 10)
     };
 
-    this.http.post<{ id_grupo_suscripcion: number }>('http://192.168.50.202:3001/api/grupos/crear', grupoConUsuario)
+    this.http.post<{ id_grupo_suscripcion: number }>('http://148.211.67.206:3001/api/grupos/crear', grupoConUsuario)
       .subscribe(
         (response) => {
           alert('Grupo creado exitosamente');
