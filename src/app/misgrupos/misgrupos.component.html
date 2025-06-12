@@ -207,6 +207,36 @@
     </div>
   }
 
+      <!-- Historial de Pagos -->
+  @if (historialPagos.length > 0) {
+    <div class="historial-container">
+      <h3 class="page-title" style="margin-top: 40px;">Historial de Pagos</h3>
+
+      <div class="groups-list">
+        @for (pago of historialPagos; track pago) {
+          <div class="group-card" style="max-width: 350px; min-width: 280px;">
+            <div class="group-card-header" style="background-color: #eaf1fb;">
+              <h3 style="margin: 0;">#{{ pago.id_historial_pago }}</h3>
+              <span class="service-type">ID Pago: {{ pago.id_pago }}</span>
+            </div>
+            <div class="group-card-body" style="padding-top: 10px;">
+              <p><strong>Grupo asociado:</strong> {{ pago.id_grupo_suscripcion }}</p>
+              <p style="color: #3a9237; font-weight: bold;">✔ Pago registrado correctamente</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+  @else if (pagosError) {
+    <div class="error-message" style="margin-top: 30px;">{{ pagosError }}</div>
+  }
+  @else {
+    <div class="no-groups-message" style="margin-top: 30px;">
+      No se han registrado pagos aún.
+    </div>
+  }
+
   <div style="
     display: flex;
     margin-top: 30px;
@@ -241,6 +271,7 @@
   border: 1px solid #e2e6ea;
   transition: all 0.3s ease;
 ">
-  <!-- Espacio para el elemento de la tarjeta de crédito -->
+  
+
 </div>
 </div>
