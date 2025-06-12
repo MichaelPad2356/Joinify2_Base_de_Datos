@@ -2,10 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-creaciongrupo',
-  imports: [RouterModule, FormsModule],
+  imports: [RouterModule, FormsModule, CommonModule], // Agregado CommonModule
   templateUrl: './creaciongrupo.component.html',
   styleUrl: './creaciongrupo.component.css'
 })
@@ -18,7 +19,21 @@ export class CreaciongrupoComponent {
     paymentPolicy: 'monthly'
   };
 
-  constructor(private http: HttpClient, private router: Router) {}
+  serviceList: any[] = [];
+
+  constructor(private http: HttpClient, private router: Router) {
+    this.loadServices();
+  }
+
+  loadServices() {
+    this.http.get<any[]>('http://192.168.1.70:3001/api/servicios').subscribe(
+      data => {
+        this.serviceList = data;
+        console.log('Servicios cargados:', data); // Para debugging
+      },
+      error => console.error('Error al cargar servicios', error)
+    );
+  }
 
   onSubmit() {
     if (!this.groupData.name || !this.groupData.serviceType || !this.groupData.maxUsers || !this.groupData.costPerUser) {
@@ -49,11 +64,8 @@ export class CreaciongrupoComponent {
         },
         (error) => {
           alert('Hubo un error al crear el grupo.');
+          console.error('Error:', error);
         }
       );
   }
 }
-
-
-
-

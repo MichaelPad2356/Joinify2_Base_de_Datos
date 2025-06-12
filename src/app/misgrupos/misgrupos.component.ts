@@ -34,7 +34,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
       ); */
 
 
-      this.http.get<any[]>(`http://192.168.50.202:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
+      this.http.get<any[]>(`http://192.168.1.70:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
       .subscribe(
       (grupos) => {
           this.grupos = grupos.map(grupo => ({
@@ -62,7 +62,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
 
      // Obtener las notificaciones inicialmente
-     this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
      .subscribe(
        (notificaciones) => { 
          this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
@@ -83,7 +83,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
    // Llamada periódica cada 10 minutos (600,000 ms)
    this.notificacionesInterval = setInterval(() => {
-     this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
        .subscribe(
          (notificaciones) => { 
            this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0')); 
@@ -128,7 +128,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
       return;
     }
   
-    this.http.post(`http://192.168.50.202:3001/api/pagos/simular`, {
+    this.http.post(`http://192.168.1.70:3001/api/pagos/simular`, {
       userId: userId,      // Asegúrate de enviar el userId
       groupId: grupoId,    // Enviar el ID del grupo
       amount: monto        // Monto del pago
@@ -174,7 +174,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     }
   
     // Realizar la petición DELETE al servidor
-    this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/baja/${grupoId}`)
+    this.http.delete<any>(`http://192.168.1.70:3001/api/grupos/baja/${grupoId}`)
       .subscribe(
         response => {
           console.log(response.message);
@@ -203,7 +203,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     }
   
     // Realizar la petición DELETE
-    this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/salir/${grupoId}/${userId}`)
+    this.http.delete<any>(`http://192.168.1.70:3001/api/grupos/salir/${grupoId}/${userId}`)
       .subscribe(
         response => {
           console.log(response.message);
@@ -226,7 +226,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
 
   actualizarDisponibilidad(groupId: number) {
-    this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+    this.http.put<any>(`http://192.168.1.70:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
       .subscribe(
         (response) => {
           console.log(response.message, 'Disponibilidad:', response.disponibilidad);
@@ -248,7 +248,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
   
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
-    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/inactivar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.1.70:3001/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -262,7 +262,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
-    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/activar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.1.70:3001/api/grupos/activar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo activado correctamente');

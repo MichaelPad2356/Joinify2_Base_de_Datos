@@ -324,3 +324,13 @@ app.put('/api/grupos/activar/:groupId', async (req, res) => {
         res.status(500).json({ message: 'Error al activar el grupo' });
     }
 });
+
+// Obtener todos los servicios de streaming
+app.get('/api/servicios', async (req, res) => {
+    try {
+        const [servicios] = await pool.query('SELECT * FROM servicio_streaming');
+        res.json(servicios);
+    } catch (err) {
+        res.status(500).json({ message: 'Error al obtener los servicios' });
+    }
+});
