@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS joinify_DB;
+USE joinify_DB;
 -- MySQL dump 10.13  Distrib 8.0.41, for Win64 (x86_64)
 --
 -- Host: localhost    Database: joinify_prb2

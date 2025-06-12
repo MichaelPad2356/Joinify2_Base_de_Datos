@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MisGruposComponent } from './misgrupos.component'; // Corrected class name
 
-import { MisgruposComponent } from './misgrupos.component';
 
 describe('MisgruposComponent', () => {
-  let component: MisgruposComponent;
-  let fixture: ComponentFixture<MisgruposComponent>;
+  let component: MisGruposComponent;
+  let fixture: ComponentFixture<MisGruposComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [MisgruposComponent]
+      imports: [MisGruposComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(MisgruposComponent);
+    fixture = TestBed.createComponent(MisGruposComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -324,3 +324,34 @@ app.put('/api/grupos/activar/:groupId', async (req, res) => {
         res.status(500).json({ message: 'Error al activar el grupo' });
     }
 });
+
+/* ============================================================
+ *  Historial de pagos
+ *  GET /api/historial_pagos
+ *      - Sin parámetros ⇒ devuelve TODOS los registros.
+ *      - ?grupoId=###   ⇒ filtra por id_grupo_suscripcion.
+ *      - ?pagoId=###    ⇒ filtra por id_pago.
+ * ============================================================ */
+app.get('/api/historial_pagos', async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'userId requerido' });
+    }
+
+    const sql = `
+        SELECT hp.id_historial_pago, hp.id_pago, hp.id_grupo_suscripcion
+        FROM historial_pagos hp
+        JOIN grupo_suscripcion gs ON gs.id_grupo_suscripcion = hp.id_grupo_suscripcion
+        JOIN usuario_grupo ug ON ug.id_grupo_suscripcion = gs.id_grupo_suscripcion
+        WHERE ug.id_usuario = ?
+    `;
+
+    try {
+        const [rows] = await pool.query(sql, [userId]);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener el historial de pagos' });
+    }
+});
