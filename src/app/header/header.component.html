@@ -1,7 +1,5 @@
-<head>
-  <!-- FontAwesome CDN -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-</head>
+<!-- FontAwesome CDN (move this to angular.json or index.html if needed) -->
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> -->
 
 <header class="header">
   <div class="container header-container">
@@ -16,23 +14,34 @@
         <li><a routerLink="/features" routerLinkActive="active"><i class="fas fa-star"></i> Características</a></li>
         <li><a routerLink="/contact" routerLinkActive="active"><i class="fas fa-envelope"></i> Contacto</a></li>
 
-        <!-- Condicional para mostrar "Crear grupo" y el nombre del usuario si está logueado -->
+        <!-- Mostrar opciones solo si el usuario está logueado -->
         @if (isLoggedIn()) {
           <li>
-            <a routerLink="/crear-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-              Crear Grupo</a>
-
-              <a routerLink="/mis-grupos"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-                Mis Grupos</a>
-
-                <a routerLink="/unir-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-                  Unirme a un Grupo</a>
-                  <span class="user-profile">
-                    <span class="user-name">Hola, {{ userName }}</span>
-                    <button class="logout-btn" (click)="logout()">
-                      Cerrar Sesión <i class="fa-solid fa-right-from-bracket" style="color: #ffffff;"></i>
-                    </button>
-                </span>
+            <a routerLink="/crear-grupo" routerLinkActive="active"><i class="fas fa-user-group"></i> Crear Grupo</a>
+          </li>
+          <li>
+            <a routerLink="/mis-grupos" routerLinkActive="active"><i class="fas fa-user-group"></i> Mis Grupos</a>
+          </li>
+          <li>
+            <a routerLink="/unir-grupo" routerLinkActive="active"><i class="fas fa-user-group"></i> Unirme a un Grupo</a>
+          </li>
+          <!-- Menú de usuario y notificaciones -->
+          <li class="user-menu-container">
+            <div class="user-avatar" (click)="toggleUserMenu()">
+              <img src="assets/avatar.png" alt="Usuario" />
+            </div>
+            @if (showUserMenu) {
+              <div class="user-dropdown">
+                <a routerLink="/mis-grupos"><i class="fas fa-users"></i> Mis Grupos</a>
+                <a (click)="toggleNotificaciones()"><i class="fas fa-bell"></i> Mis Notificaciones</a>
+                <a (click)="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+              </div>
+            }
+          </li>
+          <li>
+            <span class="user-profile">
+              <span class="user-name">Hola, {{ userName }}</span>
+            </span>
           </li>
         }
 
@@ -48,3 +57,37 @@
     </nav>
   </div>
 </header>
+
+<!-- Ventana emergente de notificaciones -->
+@if (showNotificaciones) {
+  <div class="notificaciones-popup">
+    <div class="popup-header">
+      <span><i class="fas fa-bell"></i> Notificaciones</span>
+      <button (click)="toggleNotificaciones()" title="Cerrar">✕</button>
+    </div>
+    <div class="popup-body">
+      @if (notificaciones.length === 0) {
+        <div class="notificaciones-vacio">
+          <i class="fas fa-bell-slash"></i>
+          <div>No tienes notificaciones</div>
+        </div>
+      }
+      @for (notif of notificaciones; track notif) {
+        <div class="notificacion-item" [class.no-leida]="notif.estado === 'no_leida'">
+          <div class="notificacion-mensaje">{{ notif.mensaje }}</div>
+          <div class="notificacion-fecha">{{ notif.fecha_envio | date: 'short' }}</div>
+          @if (notif.estado === 'no_leida') {
+            <button class="marcar-leida-btn" (click)="marcarComoLeida(notif.id_notificacion)">
+              Marcar como leída
+            </button>
+          }
+        </div>
+      }
+    </div>
+    <div class="popup-footer">
+      <a routerLink="/todas-notificaciones" (click)="toggleNotificaciones()">
+        Ver todas las notificaciones
+      </a>
+    </div>
+  </div>
+}

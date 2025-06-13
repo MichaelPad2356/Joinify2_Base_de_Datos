@@ -55,7 +55,7 @@ export class RegisterComponent {
         }
       );*/
 
-      this.http.post('http://148.211.67.206:3001/usuario', userData)
+      this.http.post('http://192.168.0.6:3001/usuario', userData)
       .subscribe(
         (response: any) => {
           console.log('Registro exitoso', response);

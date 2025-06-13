@@ -254,73 +254,71 @@ app.post('/api/pagos/simular', async (req, res) => {
     }
 });
 
-// Salir de un grupo
-app.delete('/api/grupos/salir/:groupId/:userId', async (req, res) => {
-    const { groupId, userId } = req.params;
+// Confirmar pago y registrar en la base de datos
+app.post('/api/pagos/confirmar', async (req, res) => {
+    console.log('Datos recibidos en /api/pagos/confirmar:', req.body); // <-- Agrega esto
+    const { userId, groupId, amount } = req.body;
+    if (!userId || !groupId || !amount) {
+        return res.status(400).json({ message: 'Faltan datos obligatorios' });
+    }
+
     try {
-        await pool.query('DELETE FROM usuario_grupo WHERE id_usuario = ? AND id_grupo_suscripcion = ?', [userId, groupId]);
-        res.status(200).json({ message: 'Has salido del grupo correctamente.' });
+        // Registrar el pago
+        const fecha_pago = new Date();
+        const [pagoResult] = await pool.query(
+            'INSERT INTO pago (id_usuario, monto, fecha_pago) VALUES (?, ?, ?)',
+            [userId, amount, fecha_pago]
+        );
+        const id_pago = pagoResult.insertId;
+
+        // Asociar el pago al grupo en historial_pagos
+        await pool.query(
+            'INSERT INTO historial_pagos (id_pago, id_grupo_suscripcion) VALUES (?, ?)',
+            [id_pago, groupId]
+        );
+
+        // Crear notificación (estado: no leída)
+        const mensaje = `Tu pago de $${parseFloat(amount).toFixed(2)} para el grupo con ID ${groupId} ha sido recibido correctamente.`;
+        await pool.query(
+            'INSERT INTO notificacion (id_usuario, mensaje, fecha_envio, estado) VALUES (?, ?, ?, ?)',
+            [userId, mensaje, fecha_pago, 'no_leida'] // <-- Cambia aquí
+        );
+
+        res.status(201).json({ message: 'Pago registrado correctamente', id_pago });
     } catch (err) {
-        res.status(500).json({ message: 'Error al procesar la solicitud.' });
+        console.error('Error en /api/pagos/confirmar:', err); // <-- Mejora el log
+        res.status(500).json({ message: 'Error al registrar el pago', error: err.message });
     }
 });
 
-// Dar de baja un grupo (solo si la fecha de vencimiento ya pasó)
-app.delete('/api/grupos/baja/:groupId', async (req, res) => {
-    const { groupId } = req.params;
+// Obtener notificaciones de un usuario
+app.get('/api/notificaciones/:userId', async (req, res) => {
+    const userId = req.params.userId;
     try {
-        const [grupos] = await pool.query('SELECT * FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
-        if (grupos.length === 0) {
-            return res.status(404).json({ message: 'Grupo no encontrado' });
-        }
-        const grupo = grupos[0];
-        const fechaVencimiento = new Date(grupo.fecha_vencimiento);
-        const fechaActual = new Date();
-        if (fechaActual < fechaVencimiento) {
-            return res.status(400).json({
-                message: `No se puede dar de baja el grupo hasta la fecha de vencimiento: ${fechaVencimiento.toISOString()}`
-            });
-        }
-        await pool.query('DELETE FROM usuario_grupo WHERE id_grupo_suscripcion = ?', [groupId]);
-        await pool.query('DELETE FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
-        res.status(200).json({
-            message: `El grupo ${groupId} y todas sus relaciones han sido eliminados correctamente`
-        });
+        const [notificaciones] = await pool.query(
+            'SELECT * FROM notificacion WHERE id_usuario = ? ORDER BY fecha_envio DESC',
+            [userId]
+        );
+        res.json(notificaciones);
     } catch (err) {
-        res.status(500).json({ message: 'Error al procesar la solicitud' });
+        res.status(500).json({ message: 'Error al obtener las notificaciones' });
     }
 });
 
-// Inicia el servidor en el puerto 3001
-app.listen(3001, '0.0.0.0', () => {
-    console.log('Servidor corriendo en http://0.0.0.0:3001');
-});
-
-
-// Inactivar grupo (solo Admin puede hacerlo)
-app.put('/api/grupos/inactivar/:groupId', async (req, res) => {
-    const { groupId } = req.params;
+// Marcar una notificación como leída
+app.put('/api/notificaciones/:id/leida', async (req, res) => {
+    const id = req.params.id;
     try {
         await pool.query(
-            'UPDATE grupo_suscripcion SET estado_grupo = ? WHERE id_grupo_suscripcion = ?',
-            ['Inactivo', groupId]
+            "UPDATE notificacion SET estado = 'leida' WHERE id_notificacion = ?",
+            [id]
         );
-        res.json({ message: 'Grupo inactivado correctamente' });
+        res.json({ message: 'Notificación marcada como leída' });
     } catch (err) {
-        res.status(500).json({ message: 'Error al inactivar el grupo' });
+        res.status(500).json({ message: 'Error al actualizar la notificación' });
     }
 });
 
-// Activar grupo (solo Admin puede hacerlo)
-app.put('/api/grupos/activar/:groupId', async (req, res) => {
-    const { groupId } = req.params;
-    try {
-        await pool.query(
-            'UPDATE grupo_suscripcion SET estado_grupo = ? WHERE id_grupo_suscripcion = ?',
-            ['Activo', groupId]
-        );
-        res.json({ message: 'Grupo activado correctamente' });
-    } catch (err) {
-        res.status(500).json({ message: 'Error al activar el grupo' });
-    }
+app.listen(3001, () => {
+    console.log('Servidor corriendo en http://localhost:3001');
 });

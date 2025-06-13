@@ -15,6 +15,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
   elements: any;
   card: any;
   notificacionesInterval: any;  // Variable para almacenar el intervalo
+  isProcessingPayment = false; // Variable para manejar el estado del pago
 
   constructor(private http: HttpClient) {}
 
@@ -34,7 +35,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
       ); */
 
 
-      this.http.get<any[]>(`http://148.211.67.206:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
+      this.http.get<any[]>(`http://192.168.0.6:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
       .subscribe(
       (grupos) => {
           this.grupos = grupos.map(grupo => ({
@@ -62,7 +63,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
 
      // Obtener las notificaciones inicialmente
-     this.http.get<any[]>(`http://148.211.67.206:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.0.6:3001/api/notificaciones/vencimientos`)
      .subscribe(
        (notificaciones) => { 
          this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
@@ -83,7 +84,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
    // Llamada periódica cada 10 minutos (600,000 ms)
    this.notificacionesInterval = setInterval(() => {
-     this.http.get<any[]>(`http://148.211.67.206:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.0.6:3001/api/notificaciones/vencimientos`)
        .subscribe(
          (notificaciones) => { 
            this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0')); 
@@ -128,14 +129,14 @@ export class MisGruposComponent implements OnInit, OnDestroy {
       return;
     }
   
-    this.http.post(`http://148.211.67.206:3001/api/pagos/simular`, {
+    this.http.post(`http://192.168.0.6:3001/api/pagos/simular`, {
       userId: userId,      // Asegúrate de enviar el userId
       groupId: grupoId,    // Enviar el ID del grupo
       amount: monto        // Monto del pago
     }).subscribe(
       (res: any) => {
         const { clientSecret } = res;  // Obtener el clientSecret desde el servidor
-        this.confirmPayment(clientSecret); // Confirmar el pago usando Stripe Elements
+        this.confirmPayment(clientSecret, grupoId, monto); // Confirmar el pago usando Stripe Elements
       },
       (error) => { 
         console.error('Error en la simulación de pago:', error);
@@ -145,21 +146,36 @@ export class MisGruposComponent implements OnInit, OnDestroy {
   }
 
   // Método para simular la confirmación del pago con Stripe
-  confirmPayment(clientSecret: string) {
+  confirmPayment(clientSecret: string, grupoId: number, monto: number): void {
+    this.isProcessingPayment = true;
     this.stripe.confirmCardPayment(clientSecret, {
       payment_method: {
         card: this.card,
         billing_details: {
-          name: 'Nombre del Usuario',  // Aquí puedes obtener el nombre del usuario
+          name: 'Usuario Joinify',
         },
       },
     }).then((result: any) => {
+      this.isProcessingPayment = false;
       if (result.error) {
-        console.error('Error al procesar la simulación:', result.error);
-        alert('Hubo un error en la simulación del pago. Inténtalo de nuevo.');
+        console.error('Error al procesar el pago:', result.error);
+        alert('Hubo un error en el pago. Inténtalo de nuevo.');
       } else {
-        if (result.paymentIntent.status === 'succeeded') {
-          alert('Pago realizado con éxito!');
+        if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+          const userId = localStorage.getItem('userId');
+          this.http.post(`http://192.168.0.6:3001/api/pagos/confirmar`, {
+            userId: userId,
+            groupId: grupoId,
+            amount: monto
+          }).subscribe(
+            (response) => {
+              alert('¡Pago registrado con éxito!');
+            },
+            (error) => {
+              console.error('Error al registrar el pago:', error);
+              alert('El pago fue procesado, pero hubo un problema al registrarlo.');
+            }
+          );
         }
       }
     });
@@ -174,7 +190,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     }
   
     // Realizar la petición DELETE al servidor
-    this.http.delete<any>(`http://148.211.67.206:3001/api/grupos/baja/${grupoId}`)
+    this.http.delete<any>(`http://192.168.0.6:3001/api/grupos/baja/${grupoId}`)
       .subscribe(
         response => {
           console.log(response.message);
@@ -203,7 +219,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     }
   
     // Realizar la petición DELETE
-    this.http.delete<any>(`http://148.211.67.206:3001/api/grupos/salir/${grupoId}/${userId}`)
+    this.http.delete<any>(`http://192.168.0.6:3001/api/grupos/salir/${grupoId}/${userId}`)
       .subscribe(
         response => {
           console.log(response.message);
@@ -226,7 +242,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
 
   actualizarDisponibilidad(groupId: number) {
-    this.http.put<any>(`http://148.211.67.206:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
       .subscribe(
         (response) => {
           console.log(response.message, 'Disponibilidad:', response.disponibilidad);
@@ -248,7 +264,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
   
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
-    this.http.put<any>(`http://148.211.67.206:3001/api/grupos/inactivar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -262,7 +278,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
-    this.http.put<any>(`http://148.211.67.206:3001/api/grupos/activar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/activar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo activado correctamente');

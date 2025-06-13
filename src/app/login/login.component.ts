@@ -20,7 +20,7 @@ export class LoginComponent {
 
   // Lógica para manejar el envío de los datos de login
   onLoginSubmit(): void {
-    const url = 'http://148.211.67.206:3001/login';  // Cambia a tu endpoint de login
+    const url = 'http://192.168.0.6:3001/login';  // Cambia a tu endpoint de login
 
     this.http.post<{ userId: number, userName: string }>(url, this.loginData).subscribe(
       (response) => {
