@@ -145,7 +145,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Método para simular la confirmación del pago con Stripe
+  // Método para simular la confirmación del pago with Stripe
   confirmPayment(clientSecret: string, grupoId: number, monto: number): void {
     this.isProcessingPayment = true;
     this.stripe.confirmCardPayment(clientSecret, {
@@ -166,7 +166,7 @@ export class MisGruposComponent implements OnInit, OnDestroy {
           this.http.post(`http://192.168.0.6:3001/api/pagos/confirmar`, {
             userId: userId,
             groupId: grupoId,
-            amount: monto
+            monto: monto
           }).subscribe(
             (response) => {
               alert('¡Pago registrado con éxito!');

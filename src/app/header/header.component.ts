@@ -1,11 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { DatePipe, CommonModule } from '@angular/common'; // <-- Agrega esto
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-header',
-  imports: [RouterModule, DatePipe, CommonModule], // <-- Agrega DatePipe y CommonModule aquí
+  imports: [RouterModule, DatePipe],
   templateUrl: './header.component.html',
   styleUrl: './header.component.css'
 })
@@ -29,6 +29,7 @@ export class HeaderComponent implements OnInit {
   logout(): void {
     localStorage.removeItem('username');
     localStorage.removeItem('authToken');
+    this.closeMenus();
     this.router.navigate(['/login']);
   }
 
@@ -45,6 +46,11 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  closeMenus() {
+    this.showUserMenu = false;
+    this.showNotificaciones = false;
+  }
+
   // Obtener notificaciones del usuario
   cargarNotificaciones() {
     const userId = localStorage.getItem('userId');
@@ -58,9 +64,37 @@ export class HeaderComponent implements OnInit {
   marcarComoLeida(id_notificacion: number) {
     this.http.put(`http://localhost:3001/api/notificaciones/${id_notificacion}/leida`, {})
       .subscribe(() => {
-        // Actualiza la lista localmente para reflejar el cambio
         const notif = this.notificaciones.find(n => n.id_notificacion === id_notificacion);
         if (notif) notif.estado = 'leida';
       });
+  }
+
+  // Eliminar una notificación
+  eliminarNotificacion(id_notificacion: number) {
+    this.http.put(`http://localhost:3001/api/notificaciones/${id_notificacion}/eliminar`, {})
+      .subscribe(() => {
+        // Opcional: quitar del array localmente para respuesta inmediata
+        const notif = this.notificaciones.find(n => n.id_notificacion === id_notificacion);
+        if (notif) notif.estado = 'eliminada';
+      });
+  }
+
+  // Cerrar menús al hacer clic fuera
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    const userMenuContainer = target.closest('.user-menu-container');
+    const notificacionesPopup = target.closest('.notificaciones-popup');
+
+    if (!userMenuContainer && this.showUserMenu) {
+      this.showUserMenu = false;
+    }
+    if (!notificacionesPopup && this.showNotificaciones) {
+      this.showNotificaciones = false;
+    }
+  }
+
+  trackById(index: number, item: any) {
+    return item.id_notificacion;
   }
 }

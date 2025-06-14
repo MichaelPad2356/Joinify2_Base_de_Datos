@@ -1,6 +1,7 @@
 <!-- FontAwesome CDN (move this to angular.json or index.html if needed) -->
 <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> -->
 
+<!-- header.component.html -->
 <header class="header">
   <div class="container header-container">
     <div class="logo">
@@ -14,38 +15,40 @@
         <li><a routerLink="/features" routerLinkActive="active"><i class="fas fa-star"></i> Características</a></li>
         <li><a routerLink="/contact" routerLinkActive="active"><i class="fas fa-envelope"></i> Contacto</a></li>
 
-        <!-- Mostrar opciones solo si el usuario está logueado -->
+
         @if (isLoggedIn()) {
           <li>
             <a routerLink="/crear-grupo" routerLinkActive="active"><i class="fas fa-user-group"></i> Crear Grupo</a>
           </li>
           <li>
-            <a routerLink="/mis-grupos" routerLinkActive="active"><i class="fas fa-user-group"></i> Mis Grupos</a>
+            <a routerLink="/unir-grupo" routerLinkActive="active">
+              <i class="fas fa-user-plus"></i> Unirme a un grupo
+            </a>
           </li>
-          <li>
-            <a routerLink="/unir-grupo" routerLinkActive="active"><i class="fas fa-user-group"></i> Unirme a un Grupo</a>
-          </li>
-          <!-- Menú de usuario y notificaciones -->
           <li class="user-menu-container">
-            <div class="user-avatar" (click)="toggleUserMenu()">
-              <img src="assets/avatar.png" alt="Usuario" />
+            <div class="user-name-clickable"
+              [class.active]="showUserMenu"
+              (click)="toggleUserMenu()">
+              Hola, {{ userName }}
             </div>
-            @if (showUserMenu) {
-              <div class="user-dropdown">
-                <a routerLink="/mis-grupos"><i class="fas fa-users"></i> Mis Grupos</a>
-                <a (click)="toggleNotificaciones()"><i class="fas fa-bell"></i> Mis Notificaciones</a>
-                <a (click)="logout()"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
-              </div>
-            }
-          </li>
-          <li>
-            <span class="user-profile">
-              <span class="user-name">Hola, {{ userName }}</span>
-            </span>
+            <div class="user-dropdown"
+              [class.show]="showUserMenu">
+              <a routerLink="/mis-grupos" (click)="closeMenus()">
+                <i class="fas fa-users"></i> Mis Grupos
+              </a>
+              <a (click)="toggleNotificaciones(); $event.stopPropagation()">
+                <i class="fas fa-bell"></i> Mis Notificaciones
+              </a>
+              <a routerLink="/historial-pagos" (click)="closeMenus()">
+                <i class="fas fa-credit-card"></i> Historial de Pagos
+              </a>
+              <a (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+              </a>
+            </div>
           </li>
         }
 
-        <!-- Mostrar login si el usuario no está logueado -->
         @if (!isLoggedIn()) {
           <li>
             <a routerLink="/login" class="btn-primary">
@@ -72,22 +75,28 @@
           <div>No tienes notificaciones</div>
         </div>
       }
-      @for (notif of notificaciones; track notif) {
-        <div class="notificacion-item" [class.no-leida]="notif.estado === 'no_leida'">
-          <div class="notificacion-mensaje">{{ notif.mensaje }}</div>
-          <div class="notificacion-fecha">{{ notif.fecha_envio | date: 'short' }}</div>
-          @if (notif.estado === 'no_leida') {
-            <button class="marcar-leida-btn" (click)="marcarComoLeida(notif.id_notificacion)">
-              Marcar como leída
-            </button>
-          }
-        </div>
+      <!-- Solo muestra notificaciones que no estén eliminadas -->
+      @for (notif of notificaciones; track trackById($index, notif)) {
+        @if (notif.estado !== 'eliminada') {
+          <div class="notificacion-item" [class.no-leida]="notif.estado === 'pendiente'">
+            <div class="notificacion-mensaje">
+              {{ notif.mensaje }}
+              <span class="cerrar-notificacion" (click)="eliminarNotificacion(notif.id_notificacion)" title="Eliminar">✕</span>
+            </div>
+            <div class="notificacion-fecha">{{ notif.fecha_envio | date: 'short' }}</div>
+            @if (notif.estado === 'pendiente') {
+              <button class="marcar-leida-btn" (click)="marcarComoLeida(notif.id_notificacion)">
+                Marcar como leída
+              </button>
+            }
+          </div>
+        }
       }
-    </div>
-    <div class="popup-footer">
-      <a routerLink="/todas-notificaciones" (click)="toggleNotificaciones()">
-        Ver todas las notificaciones
-      </a>
+      <div class="popup-footer">
+        <a routerLink="/todas-notificaciones" (click)="toggleNotificaciones()">
+          Ver todas las notificaciones
+        </a>
+      </div>
     </div>
   </div>
 }
