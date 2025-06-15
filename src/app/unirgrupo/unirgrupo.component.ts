@@ -26,7 +26,9 @@ export class UnirGrupoComponent implements OnInit {
         return;
     }
 
+
     this.http.get<any[]>(`http://192.168.0.6:3001/gruposdisponibles/${usuarioId}`)
+
       .subscribe(
         data => {
           this.gruposDisponibles = data.map(grupo => ({
@@ -56,6 +58,7 @@ export class UnirGrupoComponent implements OnInit {
       return;
     }
 
+
     this.http.post<any>('http://192.168.0.6:3001/api/grupos/unirse', {
       groupId: grupoId,
       userId: usuarioId
@@ -72,7 +75,9 @@ export class UnirGrupoComponent implements OnInit {
   }
     
     actualizarDisponibilidad(groupId: number) {
+
       this.http.put<any>(`http://192.168.0.6:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+
         .subscribe(
           (response) => {
             console.log(response.message, 'Disponibilidad:', response.disponibilidad);

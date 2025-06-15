@@ -17,23 +17,25 @@
             placeholder="Nombre del grupo"
           >
         </div>
-        <div class="form-group">
-          <label for="serviceType"><i class="fas fa-globe"></i> Tipo de servicio/plataforma</label>
-          <select 
-            id="serviceType" 
-            [(ngModel)]="groupData.serviceType" 
-            name="serviceType" 
-            required 
-            class="form-select"
-          >
-            <option value="" disabled selected>Selecciona una plataforma</option>
-            <option value="Netflix">Netflix</option>
-            <option value="Disney Plus">Disney Plus</option>
-            <option value="HBO Max">HBO Max</option>
-            <option value="Amazon Prime">Amazon Prime</option>
-            <option value="Apple TV">Apple TV</option>
-          </select>
-        </div>
+       
+       
+       <div class="form-group">
+  <label for="serviceType"><i class="fas fa-globe"></i> Tipo de servicio/plataforma</label>
+  <select 
+    id="serviceType" 
+    [(ngModel)]="groupData.serviceType" 
+    name="serviceType" 
+    required 
+    class="form-select"
+  >
+    <option value="" disabled selected>Selecciona una plataforma</option>
+    <option *ngFor="let service of serviceList" [value]="service.nombre_servicio">
+      {{ service.nombre_servicio }}
+    </option>
+  </select>
+</div>
+
+
         <div class="form-group">
           <label for="maxUsers"><i class="fas fa-users-cog"></i> Número máximo de usuarios</label>
           <input 

@@ -1,3 +1,4 @@
+
 CREATE DATABASE IF NOT EXISTS joinify_DB;
 USE joinify_DB;
 
