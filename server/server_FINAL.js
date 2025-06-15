@@ -434,28 +434,39 @@ app.get('/api/historial_pagos', async (req, res) => {
     }
 });
 
-app.delete('/api/grupos/baja/:id', async (req, res) => {
-    const grupoId = req.params.id;
+// Salir de un grupo
+app.delete('/api/grupos/salir/:groupId/:userId', async (req, res) => {
+    const { groupId, userId } = req.params;
     try {
-        // Consulta la fecha límite del grupo
-        const [grupo] = await pool.query('SELECT fecha_vencimiento FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [grupoId]);
-        if (grupo.length === 0) {
-            return res.status(404).json({ message: 'Grupo no encontrado' });
-        }
-        const fechaVencimiento = new Date(grupo[0].fecha_vencimiento);
-        const hoy = new Date();
-
-        // Si la fecha límite no se ha cumplido, no permitir la baja
-        if (hoy < fechaVencimiento) {
-            return res.status(400).json({ message: 'No se puede dar de baja el grupo hasta que se cumpla la fecha límite.' });
-        }
-
-        // Si ya se cumplió la fecha, puedes darlo de baja (por ejemplo, cambiar estado)
-        await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Inactivo" WHERE id_grupo_suscripcion = ?', [grupoId]);
-        res.json({ message: 'Grupo dado de baja correctamente.' });
+        await pool.query('DELETE FROM usuario_grupo WHERE id_usuario = ? AND id_grupo_suscripcion = ?', [userId, groupId]);
+        res.status(200).json({ message: 'Has salido del grupo correctamente.' });
     } catch (err) {
-        res.status(500).json({ message: 'Error al dar de baja el grupo.' });
+        res.status(500).json({ message: 'Error al procesar la solicitud.' });
     }
 });
 
-
+// Dar de baja un grupo (solo si la fecha de vencimiento ya pasó)
+app.delete('/api/grupos/baja/:groupId', async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        const [grupos] = await pool.query('SELECT * FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
+        if (grupos.length === 0) {
+            return res.status(404).json({ message: 'Grupo no encontrado' });
+        }
+        const grupo = grupos[0];
+        const fechaVencimiento = new Date(grupo.fecha_vencimiento);
+        const fechaActual = new Date();
+        if (fechaActual < fechaVencimiento) {
+            return res.status(400).json({
+                message: `No se puede dar de baja el grupo hasta la fecha de vencimiento: ${fechaVencimiento.toISOString()}`
+            });
+        }
+        await pool.query('DELETE FROM usuario_grupo WHERE id_grupo_suscripcion = ?', [groupId]);
+        await pool.query('DELETE FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
+        res.status(200).json({
+            message: `El grupo ${groupId} y todas sus relaciones han sido eliminados correctamente`
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al procesar la solicitud' });
+    }
+});

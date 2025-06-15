@@ -262,7 +262,7 @@ today: any;
       .subscribe(
         response => {
           alert('Has salido del grupo exitosamente');
-          this.actualizarDisponibilidad(grupoId);
+          // this.actualizarDisponibilidad(grupoId);
           setTimeout(() => {
             window.location.reload();
           }, 4000);
@@ -274,19 +274,19 @@ today: any;
       );
   }
 
-  actualizarDisponibilidad(groupId: number) {
+  // actualizarDisponibilidad(groupId: number) {
 
-    this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
-      .subscribe(
-        (response) => {
-          alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
-        },
-        (error) => {
-          console.error('Error al actualizar la disponibilidad:', error);
-          alert('Error al verificar o actualizar la disponibilidad.');
-        }
-      );
-  }
+  //   this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+  //     .subscribe(
+  //       (response) => {
+  //         alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
+  //       },
+  //       (error) => {
+  //         console.error('Error al actualizar la disponibilidad:', error);
+  //         alert('Error al verificar o actualizar la disponibilidad.');
+  //       }
+  //     );
+  // }
 
   calcularPoliticaPago(fechaInicio: string, fechaVencimiento: string): string {
     const inicio = new Date(fechaInicio);
