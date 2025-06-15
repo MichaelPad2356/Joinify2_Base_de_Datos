@@ -434,4 +434,28 @@ app.get('/api/historial_pagos', async (req, res) => {
     }
 });
 
+app.delete('/api/grupos/baja/:id', async (req, res) => {
+    const grupoId = req.params.id;
+    try {
+        // Consulta la fecha límite del grupo
+        const [grupo] = await pool.query('SELECT fecha_vencimiento FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [grupoId]);
+        if (grupo.length === 0) {
+            return res.status(404).json({ message: 'Grupo no encontrado' });
+        }
+        const fechaVencimiento = new Date(grupo[0].fecha_vencimiento);
+        const hoy = new Date();
+
+        // Si la fecha límite no se ha cumplido, no permitir la baja
+        if (hoy < fechaVencimiento) {
+            return res.status(400).json({ message: 'No se puede dar de baja el grupo hasta que se cumpla la fecha límite.' });
+        }
+
+        // Si ya se cumplió la fecha, puedes darlo de baja (por ejemplo, cambiar estado)
+        await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Inactivo" WHERE id_grupo_suscripcion = ?', [grupoId]);
+        res.json({ message: 'Grupo dado de baja correctamente.' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al dar de baja el grupo.' });
+    }
+});
+
 

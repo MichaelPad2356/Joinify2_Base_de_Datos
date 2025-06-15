@@ -73,7 +73,7 @@ export class HeaderComponent implements OnInit {
   cargarNotificaciones() {
     const userId = localStorage.getItem('userId');
     if (userId) {
-      this.http.get<any[]>(`http://localhost:3001/api/notificaciones/${userId}`)
+      this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/${userId}`)
         .subscribe(data => {
           // Formatear la fecha de cada notificación
           this.notificaciones = data.map(n => ({
@@ -86,7 +86,7 @@ export class HeaderComponent implements OnInit {
 
   // Marcar una notificación como leída
   marcarComoLeida(id_notificacion: number) {
-    this.http.put(`http://localhost:3001/api/notificaciones/${id_notificacion}/leida`, {})
+    this.http.put(`http://192.168.50.202:3001/api/notificaciones/${id_notificacion}/leida`, {})
       .subscribe(() => {
         const notif = this.notificaciones.find(n => n.id_notificacion === id_notificacion);
         if (notif) notif.estado = 'leida';
@@ -95,7 +95,7 @@ export class HeaderComponent implements OnInit {
 
   // Eliminar una notificación
   eliminarNotificacion(id_notificacion: number) {
-    this.http.put(`http://localhost:3001/api/notificaciones/${id_notificacion}/eliminar`, {})
+    this.http.put(`http://192.168.50.202:3001/api/notificaciones/${id_notificacion}/eliminar`, {})
       .subscribe(() => {
         // Opcional: quitar del array localmente para respuesta inmediata
         const notif = this.notificaciones.find(n => n.id_notificacion === id_notificacion);
@@ -107,7 +107,7 @@ export class HeaderComponent implements OnInit {
   cargarHistorialPagos() {
     const userId = localStorage.getItem('userId');
     if (userId) {
-      this.http.get<any[]>(`http://localhost:3001/api/historial_pagos?userId=${userId}`)
+      this.http.get<any[]>(`http://192.168.50.202:3001/api/historial_pagos?userId=${userId}`)
         .subscribe(pagos => {
           // Formatear la fecha de cada pago
           this.historialPagos = pagos.map(p => ({

@@ -89,7 +89,7 @@ today: any;
 
      // Obtener las notificaciones inicialmente
 
-     this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
 
      .subscribe(
        (notificaciones) => { 
@@ -112,7 +112,7 @@ today: any;
    // Llamada periódica cada 10 minutos (600,000 ms)
    this.notificacionesInterval = setInterval(() => {
 
-     this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
 
        .subscribe(
          (notificaciones) => { 
@@ -168,7 +168,7 @@ today: any;
 
   
 
-    this.http.post(`http://192.168.1.70:3001/api/pagos/simular`, {
+    this.http.post(`http://192.168.50.202:3001/api/pagos/simular`, {
 
       userId: userId,      // Asegúrate de enviar el userId
       groupId: grupoId,    // Enviar el ID del grupo
@@ -209,7 +209,7 @@ today: any;
       } else {
         if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
           const userId = localStorage.getItem('userId');
-          this.http.post(`http://192.168.0.6:3001/api/pagos/confirmar`, {
+          this.http.post(`http://192.168.50.202:3001/api/pagos/confirmar`, {
             userId: userId,
             groupId: grupoId,
             monto: monto
@@ -276,7 +276,7 @@ today: any;
 
   actualizarDisponibilidad(groupId: number) {
 
-    this.http.put<any>(`http://192.168.0.6:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+    this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
       .subscribe(
         (response) => {
           alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
@@ -298,7 +298,7 @@ today: any;
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
 
-    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/inactivar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -313,7 +313,7 @@ today: any;
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
 
-    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/activar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/activar/${grupoId}`, {})
 
       .subscribe(
         response => {
