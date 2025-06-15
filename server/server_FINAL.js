@@ -330,6 +330,48 @@ app.get('/api/historial_pagos', async (req, res) => {
   }
 });
 
+// ✅ Función para notificar a todos los miembros del grupo
+async function notificarMiembrosGrupo(pool, grupoId, mensaje) {
+  const [miembros] = await pool.query(
+    'SELECT id_usuario FROM usuario_grupo WHERE id_grupo_suscripcion = ?',
+    [grupoId]
+  );
+  for (const miembro of miembros) {
+    await pool.query(
+      'INSERT INTO notificacion (id_usuario, mensaje, fecha_envio, estado) VALUES (?, ?, CURDATE(), ?)',
+      [miembro.id_usuario, mensaje, 'pendiente']
+    );
+  }
+}
+
+// ✅ Endpoint para activar grupo y notificar a miembros
+app.put('/api/grupos/activar/:id', async (req, res) => {
+  const grupoId = req.params.id;
+  try {
+    await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Activo" WHERE id_grupo_suscripcion = ?', [grupoId]);
+    const mensaje = "Se ha actualizado el grupo.";
+    await notificarMiembrosGrupo(pool, grupoId, mensaje);
+    res.json({ message: 'Grupo activado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error al activar el grupo' });
+  }
+});
+
+// ✅ Endpoint para inactivar grupo y notificar a miembros
+app.put('/api/grupos/inactivar/:id', async (req, res) => {
+  const grupoId = req.params.id;
+  try {
+    await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Inactivo" WHERE id_grupo_suscripcion = ?', [grupoId]);
+    const mensaje = "Se ha actualizado el grupo.";
+    await notificarMiembrosGrupo(pool, grupoId, mensaje);
+    res.json({ message: 'Grupo inactivado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error al inactivar el grupo' });
+  }
+});
+
 // ✅ Iniciar servidor
 app.listen(3001, () => {
     console.log('Servidor corriendo en http://localhost:3001');
