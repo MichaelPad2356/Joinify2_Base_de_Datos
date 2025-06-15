@@ -1,42 +1,52 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { loadStripe } from '@stripe/stripe-js'; // Importar Stripe.js
+import { loadStripe } from '@stripe/stripe-js';
+import { HistorialPago } from '../models/historial-pago.model';
+import { HistorialPagosService } from '../services/historial-pagos.service';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-misgrupos',
+  imports: [CommonModule],
   templateUrl: './misgrupos.component.html',
   styleUrls: ['./misgrupos.component.css']
 })
 export class MisGruposComponent implements OnInit, OnDestroy {
-  grupos: any[] = []; // Para almacenar los grupos del usuario
-  notificaciones: any[] = []; // Para las notificaciones del usuario
-  errorMessage: string = ''; // Para manejar mensajes de error
+  grupos: any[] = [];
+  notificaciones: any[] = [];
+  errorMessage: string = '';
   stripe: any;
   elements: any;
   card: any;
-  notificacionesInterval: any;  // Variable para almacenar el intervalo
 
-  constructor(private http: HttpClient) {}
+  notificacionesInterval: any;  // Variable para almacenar el intervalo
+  isProcessingPayment = false; // Variable para manejar el estado del pago
+
+
+  historialPagos: HistorialPago[] = [];
+  pagosError = '';
+today: any;
+
+
+  constructor(
+    private http: HttpClient,
+    private historialSrv: HistorialPagosService
+  ) {}
 
   ngOnInit(): void {
+    this.cargarHistorialPagos();
+
     const usuarioId = localStorage.getItem('userId');
     if (!usuarioId) {
-      console.error('No se encontró un usuario logueado.');
       this.errorMessage = 'Por favor, inicia sesión para ver tus grupos.';
       return;
     }
 
-    // Obtener los grupos
-    /*this.http.get<any[]>(`http://192.168.50.20:3001/api/grupos/usuario?usuarioId=${usuarioId}`)
+    this.http.get<any[]>(`http://192.168.50.202:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
       .subscribe(
-        (grupos) => { this.grupos = grupos; },
-        (error) => { console.error('Error al obtener los grupos:', error); this.errorMessage = 'Error al cargar tus grupos. Intenta nuevamente más tarde.'; }
-      ); */
+        (grupos) => {
 
-
-      this.http.get<any[]>(`http://192.168.1.70:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
-      .subscribe(
-      (grupos) => {
           this.grupos = grupos.map(grupo => ({
             id: grupo.id_grupo_suscripcion,
             name: grupo.nombre_grupo,
@@ -51,18 +61,36 @@ export class MisGruposComponent implements OnInit, OnDestroy {
             rol: grupo.rol || '',
             isCreatedByUser: grupo.rol === 'Admin',
             isJoinedByUser: grupo.rol === 'Miembro',
-            estado_grupo: grupo.estado_grupo // <--- Aquí mapeas el estado del grupo
+            estado_grupo: grupo.estado_grupo
           }));
-      },
-      (error) => {
+        },
+        (error) => {
           console.error('Error al obtener los grupos:', error);
           this.errorMessage = 'Error al cargar tus grupos. Intenta nuevamente más tarde.';
-      }
+        }
+      );
+
+    this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
+      .subscribe(
+        (notificaciones) => { 
+          this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
+          this.notificaciones.forEach((notificacion, index) => {
+            setTimeout(() => {
+              this.notificaciones.splice(index, 1);
+            }, 5000);
+          });
+        },
+        (error) => { 
+          console.error('Error al obtener las notificaciones:', error); 
+          this.errorMessage = 'Error al cargar tus notificaciones.'; 
+        }
       );
 
 
      // Obtener las notificaciones inicialmente
+
      this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
+
      .subscribe(
        (notificaciones) => { 
          this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
@@ -83,7 +111,9 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
    // Llamada periódica cada 10 minutos (600,000 ms)
    this.notificacionesInterval = setInterval(() => {
+
      this.http.get<any[]>(`http://192.168.1.70:3001/api/notificaciones/vencimientos`)
+
        .subscribe(
          (notificaciones) => { 
            this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0')); 
@@ -96,46 +126,59 @@ export class MisGruposComponent implements OnInit, OnDestroy {
    }, 60000);  // 10 minutos
   
 
-    // Cargar Stripe.js
+
     loadStripe('pk_test_51QTYY1KKAL9Zx73kVaH7pAwFyqaSPByJFrZCQKpfzLwRgE9WTWHx6lJxKfXkhK3dgOCBTFlmSGHjBUvtJJyOSM7r00PzjBxalJ')
-    .then((stripe) => {
-      if (stripe) {  // Añadir esta verificación
-        this.stripe = stripe;
-        this.elements = stripe.elements();
-        this.card = this.elements.create('card');
-        this.card.mount('#card-element');
-      } else {
-        console.error('Stripe no se cargó correctamente');
-      }
-    })
-    .catch((error) => {
-      console.error('Error al cargar Stripe:', error);
-    });
+      .then((stripe) => {
+        if (stripe) {
+          this.stripe = stripe;
+          this.elements = stripe.elements();
+          this.card = this.elements.create('card');
+          this.card.mount('#card-element');
+        } else {
+          console.error('Stripe no se cargó correctamente');
+        }
+      })
+      .catch((error) => {
+        console.error('Error al cargar Stripe:', error);
+      });
   }
 
   ngOnDestroy(): void {
-    // Limpiar el intervalo cuando el componente se destruya
     if (this.notificacionesInterval) {
       clearInterval(this.notificacionesInterval);
     }
   }
 
-  // Método para simular el pago con Stripe
+  private cargarHistorialPagos(): void {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+
+    this.historialSrv.getByUsuario(+userId).subscribe({
+      next: pagos => this.historialPagos = pagos,
+      error: _ => this.pagosError = 'Error al cargar el historial de pagos'
+    });
+  }
+
   simularPago(grupoId: number, monto: number): void {
-    const userId = localStorage.getItem('userId'); // Obtener el ID del usuario del localStorage
+    const userId = localStorage.getItem('userId');
     if (!userId) {
       alert('No se ha encontrado un usuario logueado.');
       return;
     }
+
   
+
     this.http.post(`http://192.168.1.70:3001/api/pagos/simular`, {
+
       userId: userId,      // Asegúrate de enviar el userId
       groupId: grupoId,    // Enviar el ID del grupo
       amount: monto        // Monto del pago
     }).subscribe(
       (res: any) => {
         const { clientSecret } = res;  // Obtener el clientSecret desde el servidor
-        this.confirmPayment(clientSecret); // Confirmar el pago usando Stripe Elements
+        this.confirmPayment(clientSecret, grupoId, monto); // Confirmar el pago usando Stripe Elements
+
+
       },
       (error) => { 
         console.error('Error en la simulación de pago:', error);
@@ -144,46 +187,60 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     );
   }
 
-  // Método para simular la confirmación del pago con Stripe
-  confirmPayment(clientSecret: string) {
+
+  // Método para simular la confirmación del pago with Stripe
+  confirmPayment(clientSecret: string, grupoId: number, monto: number): void {
+    this.isProcessingPayment = true;
+
     this.stripe.confirmCardPayment(clientSecret, {
       payment_method: {
         card: this.card,
         billing_details: {
-          name: 'Nombre del Usuario',  // Aquí puedes obtener el nombre del usuario
+
+          name: 'Usuario Joinify',
+
         },
       },
     }).then((result: any) => {
+      this.isProcessingPayment = false;
       if (result.error) {
-        console.error('Error al procesar la simulación:', result.error);
-        alert('Hubo un error en la simulación del pago. Inténtalo de nuevo.');
+        console.error('Error al procesar el pago:', result.error);
+        alert('Hubo un error en el pago. Inténtalo de nuevo.');
       } else {
-        if (result.paymentIntent.status === 'succeeded') {
-          alert('Pago realizado con éxito!');
+        if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+          const userId = localStorage.getItem('userId');
+          this.http.post(`http://192.168.0.6:3001/api/pagos/confirmar`, {
+            userId: userId,
+            groupId: grupoId,
+            monto: monto
+          }).subscribe(
+            (response) => {
+              alert('¡Pago registrado con éxito!');
+            },
+            (error) => {
+              console.error('Error al registrar el pago:', error);
+              alert('El pago fue procesado, pero hubo un problema al registrarlo.');
+            }
+          );
         }
       }
     });
   }
 
-
   darDeBajaGrupo(grupoId: number): void {
     const confirmacion = confirm('¿Estás seguro de que deseas dar de baja este grupo? Esta acción es irreversible.');
-  
-    if (!confirmacion) {
-      return; // Si el usuario cancela, no hacemos nada
-    }
-  
-    // Realizar la petición DELETE al servidor
-    this.http.delete<any>(`http://192.168.1.70:3001/api/grupos/baja/${grupoId}`)
+
+
+    if (!confirmacion) return;
+
+    this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/baja/${grupoId}`)
+
       .subscribe(
         response => {
-          console.log(response.message);
           alert(`El grupo ha sido dado de baja. La página se recargará en 3 segundos.`);
-  
-          // Recargar la vista después de 5 segundos
           setTimeout(() => {
             window.location.reload();
-          }, 3000); // 5000 ms = 5 segundos
+          }, 3000);
         },
         error => {
           console.error('Error al dar de baja el grupo:', error);
@@ -191,31 +248,24 @@ export class MisGruposComponent implements OnInit, OnDestroy {
         }
       );
   }
-  
-  
+
   salirDelGrupo(grupoId: number): void {
-    const userId = localStorage.getItem('userId'); // Obtener el ID del usuario
-  
+    const userId = localStorage.getItem('userId');
     if (!userId) {
       alert('Debes iniciar sesión para salir de un grupo');
-      
       return;
     }
-  
-    // Realizar la petición DELETE
-    this.http.delete<any>(`http://192.168.1.70:3001/api/grupos/salir/${grupoId}/${userId}`)
+
+
+    this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/salir/${grupoId}/${userId}`)
+
       .subscribe(
         response => {
-          console.log(response.message);
           alert('Has salido del grupo exitosamente');
-
-            // Actualizar disponibilidad basada en groupId
-            this.actualizarDisponibilidad(grupoId);
-          
-          // Recargar la vista completa despues de 4 segundos
+          this.actualizarDisponibilidad(grupoId);
           setTimeout(() => {
             window.location.reload();
-          }, 4000); // 5000 milisegundos = 5 segundos
+          }, 4000);
         },
         error => {
           console.error('Error al salir del grupo:', error);
@@ -224,12 +274,11 @@ export class MisGruposComponent implements OnInit, OnDestroy {
       );
   }
 
-
   actualizarDisponibilidad(groupId: number) {
-    this.http.put<any>(`http://192.168.1.70:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+
+    this.http.put<any>(`http://192.168.0.6:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
       .subscribe(
         (response) => {
-          console.log(response.message, 'Disponibilidad:', response.disponibilidad);
           alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
         },
         (error) => {
@@ -245,10 +294,11 @@ export class MisGruposComponent implements OnInit, OnDestroy {
     const diff = (fin.getFullYear() - inicio.getFullYear()) * 12 + (fin.getMonth() - inicio.getMonth());
     return diff >= 11 ? 'Anual' : 'Mensual';
   }
-  
+
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
-    this.http.put<any>(`http://192.168.1.70:3001/api/grupos/inactivar/${grupoId}`, {})
+
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -262,7 +312,9 @@ export class MisGruposComponent implements OnInit, OnDestroy {
 
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
-    this.http.put<any>(`http://192.168.1.70:3001/api/grupos/activar/${grupoId}`, {})
+
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/activar/${grupoId}`, {})
+
       .subscribe(
         response => {
           alert('Grupo activado correctamente');

@@ -81,3 +81,25 @@
     background-color: #0056b3;
   }
   
+  .historial-container {
+  padding: 10px 0;
+}
+
+.groups-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.group-card {
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.08);
+  padding: 16px;
+  transition: transform 0.2s ease;
+}
+
+.group-card:hover {
+  transform: translateY(-3px);
+}

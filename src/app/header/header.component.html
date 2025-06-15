@@ -1,8 +1,7 @@
-<head>
-  <!-- FontAwesome CDN -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-</head>
+<!-- FontAwesome CDN (move this to angular.json or index.html if needed) -->
+<!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"> -->
 
+<!-- header.component.html -->
 <header class="header">
   <div class="container header-container">
     <div class="logo">
@@ -16,27 +15,30 @@
         <li><a routerLink="/features" routerLinkActive="active"><i class="fas fa-star"></i> Características</a></li>
         <li><a routerLink="/contact" routerLinkActive="active"><i class="fas fa-envelope"></i> Contacto</a></li>
 
-        <!-- Condicional para mostrar "Crear grupo" y el nombre del usuario si está logueado -->
         @if (isLoggedIn()) {
-          <li>
-            <a routerLink="/crear-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-              Crear Grupo</a>
-
-              <a routerLink="/mis-grupos"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-                Mis Grupos</a>
-
-                <a routerLink="/unir-grupo"  routerLinkActive="active"><i class="fas fa-user-group"></i>
-                  Unirme a un Grupo</a>
-                  <span class="user-profile">
-                    <span class="user-name">Hola, {{ userName }}</span>
-                    <button class="logout-btn" (click)="logout()">
-                      Cerrar Sesión <i class="fa-solid fa-right-from-bracket" style="color: #ffffff;"></i>
-                    </button>
-                </span>
+          <li><a routerLink="/crear-grupo" routerLinkActive="active"><i class="fas fa-user-group"></i> Crear Grupo</a></li>
+          <li><a routerLink="/unir-grupo" routerLinkActive="active"><i class="fas fa-user-plus"></i> Unirme a un grupo</a></li>
+          <li class="user-menu-container">
+            <div class="user-name-clickable" [class.active]="showUserMenu" (click)="toggleUserMenu()">
+              Hola, {{ userName }}
+            </div>
+            <div class="user-dropdown" [class.show]="showUserMenu">
+              <a routerLink="/mis-grupos" (click)="closeMenus()">
+                <i class="fas fa-users"></i> Mis Grupos
+              </a>
+              <a (click)="toggleNotificaciones(); $event.stopPropagation()">
+                <i class="fas fa-bell"></i> Mis Notificaciones
+              </a>
+              <a (click)="togglePagosPopup(); $event.stopPropagation()">
+                <i class="fas fa-credit-card"></i> Historial de Pagos
+              </a>
+              <a (click)="logout()">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+              </a>
+            </div>
           </li>
         }
 
-        <!-- Mostrar login si el usuario no está logueado -->
         @if (!isLoggedIn()) {
           <li>
             <a routerLink="/login" class="btn-primary">
@@ -48,3 +50,79 @@
     </nav>
   </div>
 </header>
+
+<!-- Ventana emergente de notificaciones -->
+@if (showNotificaciones) {
+  <div class="notificaciones-popup">
+    <div class="popup-header">
+      <span><i class="fas fa-bell"></i> Notificaciones</span>
+      <button (click)="toggleNotificaciones()" title="Cerrar">&times;</button>
+    </div>
+    <div class="popup-body">
+      @if (notificaciones.length === 0) {
+        <div class="notificaciones-vacio">
+          <i class="fas fa-bell-slash"></i>
+          <div>No tienes notificaciones</div>
+        </div>
+      }
+      @for (notif of notificaciones; track trackById($index, notif)) {
+        <div>
+          @if (notif.estado !== 'eliminada') {
+            <div class="notificacion-item" [class.no-leida]="notif.estado === 'pendiente'">
+              <div class="notificacion-mensaje">
+                {{ notif.mensaje }}
+                <span class="cerrar-notificacion" (click)="eliminarNotificacion(notif.id_notificacion)" title="Eliminar">&times;</span>
+              </div>
+              <div class="notificacion-fecha">{{ notif.fecha_envio_formateada }}</div>
+              @if (notif.estado === 'pendiente') {
+                <button class="marcar-leida-btn" (click)="marcarComoLeida(notif.id_notificacion)">
+                  Marcar como leída
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+      <div class="popup-footer">
+        <a routerLink="/todas-notificaciones" (click)="toggleNotificaciones()">
+          Ver todas las notificaciones
+        </a>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Ventana emergente de historial de pagos -->
+@if (showPagosPopup) {
+  <div class="notificaciones-popup">
+    <div class="popup-header">
+      <span><i class="fas fa-credit-card"></i> Historial de Pagos</span>
+      <button (click)="togglePagosPopup()" title="Cerrar">&times;</button>
+    </div>
+    <div class="popup-body">
+      @if (historialPagos.length === 0) {
+        <div class="notificaciones-vacio">
+          <i class="fas fa-receipt"></i>
+          <div>No se han registrado pagos</div>
+        </div>
+      }
+      @for (pago of historialPagos; track trackById($index, pago)) {
+        <div>
+          <div class="notificacion-item">
+            <div class="notificacion-mensaje">
+              💳 Pago ID #{{ pago.id_pago }} - Grupo {{ pago.id_grupo_suscripcion }}
+            </div>
+            <div class="notificacion-fecha">
+              {{ pago.fecha_pago_formateada }}
+            </div>
+          </div>
+        </div>
+      }
+      <div class="popup-footer">
+        <a routerLink="/historial-pagos" (click)="togglePagosPopup()">
+          Ver historial completo
+        </a>
+      </div>
+    </div>
+  </div>
+}
