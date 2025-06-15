@@ -330,6 +330,7 @@ app.get('/api/historial_pagos', async (req, res) => {
   }
 });
 
+
 // ✅ Función para notificar a todos los miembros del grupo
 async function notificarMiembrosGrupo(pool, grupoId, mensaje) {
   const [miembros] = await pool.query(
@@ -376,3 +377,49 @@ app.put('/api/grupos/inactivar/:id', async (req, res) => {
 app.listen(3001, () => {
     console.log('Servidor corriendo en http://localhost:3001');
 });
+
+// Activar grupo (solo Admin puede hacerlo)
+app.put('/api/grupos/activar/:groupId', async (req, res) => {
+    const { groupId } = req.params;
+    try {
+        await pool.query(
+            'UPDATE grupo_suscripcion SET estado_grupo = ? WHERE id_grupo_suscripcion = ?',
+            ['Activo', groupId]
+        );
+        res.json({ message: 'Grupo activado correctamente' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al activar el grupo' });
+    }
+});
+
+/* ============================================================
+ *  Historial de pagos
+ *  GET /api/historial_pagos
+ *      - Sin parámetros ⇒ devuelve TODOS los registros.
+ *      - ?grupoId=###   ⇒ filtra por id_grupo_suscripcion.
+ *      - ?pagoId=###    ⇒ filtra por id_pago.
+ * ============================================================ */
+app.get('/api/historial_pagos', async (req, res) => {
+    const { userId } = req.query;
+
+    if (!userId) {
+        return res.status(400).json({ message: 'userId requerido' });
+    }
+
+    const sql = `
+        SELECT hp.id_historial_pago, hp.id_pago, hp.id_grupo_suscripcion
+        FROM historial_pagos hp
+        JOIN grupo_suscripcion gs ON gs.id_grupo_suscripcion = hp.id_grupo_suscripcion
+        JOIN usuario_grupo ug ON ug.id_grupo_suscripcion = gs.id_grupo_suscripcion
+        WHERE ug.id_usuario = ?
+    `;
+
+    try {
+        const [rows] = await pool.query(sql, [userId]);
+        res.json(rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Error al obtener el historial de pagos' });
+    }
+});
+
