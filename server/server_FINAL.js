@@ -281,6 +281,55 @@ app.get('/api/notificaciones/:userId', async (req, res) => {
     }
 });
 
+// Marcar notificación como leída
+app.put('/api/notificaciones/:id_notificacion/leida', async (req, res) => {
+  const { id_notificacion } = req.params;
+  try {
+    await pool.query(
+      'UPDATE notificacion SET estado = ? WHERE id_notificacion = ?',
+      ['leida', id_notificacion]
+    );
+    res.json({ message: 'Notificación marcada como leída' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al marcar como leída' });
+  }
+});
+
+// Eliminar notificación (estado = 'eliminada')
+app.put('/api/notificaciones/:id_notificacion/eliminar', async (req, res) => {
+  const { id_notificacion } = req.params;
+  try {
+    await pool.query(
+      'UPDATE notificacion SET estado = ? WHERE id_notificacion = ?',
+      ['eliminada', id_notificacion]
+    );
+    res.json({ message: 'Notificación eliminada' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error al eliminar la notificación' });
+  }
+});
+
+// Historial de pagos por usuario
+app.get('/api/historial_pagos', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ message: 'userId requerido' });
+  }
+  try {
+    const [pagos] = await pool.query(
+      `SELECT hp.id_historial_pago, hp.id_pago, hp.id_grupo_suscripcion, p.monto, p.fecha_pago
+       FROM historial_pagos hp
+       JOIN pago p ON hp.id_pago = p.id_pago
+       WHERE p.id_usuario = ?
+       ORDER BY p.fecha_pago DESC`,
+      [userId]
+    );
+    res.json(pagos);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener el historial de pagos' });
+  }
+});
+
 // ✅ Iniciar servidor
 app.listen(3001, () => {
     console.log('Servidor corriendo en http://localhost:3001');

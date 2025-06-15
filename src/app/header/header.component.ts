@@ -15,6 +15,8 @@ export class HeaderComponent implements OnInit {
   showUserMenu = false;
   showNotificaciones = false;
   notificaciones: any[] = [];
+  showPagosPopup = false;
+  historialPagos: any[] = [];
 
   constructor(private router: Router, private http: HttpClient) { }
 
@@ -43,6 +45,15 @@ export class HeaderComponent implements OnInit {
     if (this.showNotificaciones) {
       this.showUserMenu = false;
       this.cargarNotificaciones();
+    }
+  }
+
+  togglePagosPopup() {
+    this.showPagosPopup = !this.showPagosPopup;
+    if (this.showPagosPopup) {
+      this.showNotificaciones = false;
+      this.showUserMenu = false;
+      this.cargarHistorialPagos();
     }
   }
 
@@ -77,6 +88,15 @@ export class HeaderComponent implements OnInit {
         const notif = this.notificaciones.find(n => n.id_notificacion === id_notificacion);
         if (notif) notif.estado = 'eliminada';
       });
+  }
+
+  // Cargar historial de pagos del usuario
+  cargarHistorialPagos() {
+    const userId = localStorage.getItem('userId');
+    if (userId) {
+      this.http.get<any[]>(`http://localhost:3001/api/historial_pagos?userId=${userId}`)
+        .subscribe(pagos => this.historialPagos = pagos);
+    }
   }
 
   // Cerrar menús al hacer clic fuera
