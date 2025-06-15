@@ -19,11 +19,15 @@ export class MisGruposComponent implements OnInit, OnDestroy {
   stripe: any;
   elements: any;
   card: any;
-  notificacionesInterval: any;
+
+  notificacionesInterval: any;  // Variable para almacenar el intervalo
+  isProcessingPayment = false; // Variable para manejar el estado del pago
+
 
   historialPagos: HistorialPago[] = [];
   pagosError = '';
 today: any;
+
 
   constructor(
     private http: HttpClient,
@@ -42,6 +46,7 @@ today: any;
     this.http.get<any[]>(`http://192.168.50.202:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
       .subscribe(
         (grupos) => {
+
           this.grupos = grupos.map(grupo => ({
             id: grupo.id_grupo_suscripcion,
             name: grupo.nombre_grupo,
@@ -81,18 +86,42 @@ today: any;
         }
       );
 
-    this.notificacionesInterval = setInterval(() => {
-      this.http.get<any[]>(`http://192.168.50.202:3001/api/notificaciones/vencimientos`)
-        .subscribe(
-          (notificaciones) => { 
-            this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0')); 
-          },
-          (error) => { 
-            console.error('Error al obtener las notificaciones:', error); 
-            this.errorMessage = 'Error al cargar tus notificaciones.'; 
-          }
-        );
-    }, 60000);
+
+     // Obtener las notificaciones inicialmente
+     this.http.get<any[]>(`http://192.168.0.6:3001/api/notificaciones/vencimientos`)
+     .subscribe(
+       (notificaciones) => { 
+         this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
+         console.log('Notificaciones recibidas:', this.notificaciones);
+
+         // Hacer que cada notificación desaparezca después de 5 segundos
+         this.notificaciones.forEach((notificacion, index) => {
+           setTimeout(() => {
+             this.notificaciones.splice(index, 1);  // Eliminar la notificación después de 5 segundos
+           }, 5000);
+         });
+       },
+       (error) => { 
+         console.error('Error al obtener las notificaciones:', error); 
+         this.errorMessage = 'Error al cargar tus notificaciones.'; 
+       }
+     );
+
+   // Llamada periódica cada 10 minutos (600,000 ms)
+   this.notificacionesInterval = setInterval(() => {
+     this.http.get<any[]>(`http://192.168.0.6:3001/api/notificaciones/vencimientos`)
+       .subscribe(
+         (notificaciones) => { 
+           this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0')); 
+         },
+         (error) => { 
+           console.error('Error al obtener las notificaciones:', error); 
+           this.errorMessage = 'Error al cargar tus notificaciones.'; 
+         }
+       );
+   }, 60000);  // 10 minutos
+  
+
 
     loadStripe('pk_test_51QTYY1KKAL9Zx73kVaH7pAwFyqaSPByJFrZCQKpfzLwRgE9WTWHx6lJxKfXkhK3dgOCBTFlmSGHjBUvtJJyOSM7r00PzjBxalJ')
       .then((stripe) => {
@@ -133,14 +162,17 @@ today: any;
       return;
     }
 
-    this.http.post(`http://192.168.50.202:3001/api/pagos/simular`, {
-      userId: userId,
-      groupId: grupoId,
-      amount: monto
+  
+    this.http.post(`http://192.168.0.6:3001/api/pagos/simular`, {
+      userId: userId,      // Asegúrate de enviar el userId
+      groupId: grupoId,    // Enviar el ID del grupo
+      amount: monto        // Monto del pago
     }).subscribe(
       (res: any) => {
-        const { clientSecret } = res;
-        this.confirmPayment(clientSecret);
+        const { clientSecret } = res;  // Obtener el clientSecret desde el servidor
+        this.confirmPayment(clientSecret, grupoId, monto); // Confirmar el pago usando Stripe Elements
+
+
       },
       (error) => { 
         console.error('Error en la simulación de pago:', error);
@@ -149,21 +181,41 @@ today: any;
     );
   }
 
-  confirmPayment(clientSecret: string) {
+
+  // Método para simular la confirmación del pago with Stripe
+  confirmPayment(clientSecret: string, grupoId: number, monto: number): void {
+    this.isProcessingPayment = true;
+
     this.stripe.confirmCardPayment(clientSecret, {
       payment_method: {
         card: this.card,
         billing_details: {
-          name: 'Nombre del Usuario',
+
+          name: 'Usuario Joinify',
+
         },
       },
     }).then((result: any) => {
+      this.isProcessingPayment = false;
       if (result.error) {
-        console.error('Error al procesar la simulación:', result.error);
-        alert('Hubo un error en la simulación del pago. Inténtalo de nuevo.');
+        console.error('Error al procesar el pago:', result.error);
+        alert('Hubo un error en el pago. Inténtalo de nuevo.');
       } else {
-        if (result.paymentIntent.status === 'succeeded') {
-          alert('Pago realizado con éxito!');
+        if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
+          const userId = localStorage.getItem('userId');
+          this.http.post(`http://192.168.0.6:3001/api/pagos/confirmar`, {
+            userId: userId,
+            groupId: grupoId,
+            monto: monto
+          }).subscribe(
+            (response) => {
+              alert('¡Pago registrado con éxito!');
+            },
+            (error) => {
+              console.error('Error al registrar el pago:', error);
+              alert('El pago fue procesado, pero hubo un problema al registrarlo.');
+            }
+          );
         }
       }
     });
@@ -171,9 +223,11 @@ today: any;
 
   darDeBajaGrupo(grupoId: number): void {
     const confirmacion = confirm('¿Estás seguro de que deseas dar de baja este grupo? Esta acción es irreversible.');
+
     if (!confirmacion) return;
 
     this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/baja/${grupoId}`)
+
       .subscribe(
         response => {
           alert(`El grupo ha sido dado de baja. La página se recargará en 3 segundos.`);
@@ -195,6 +249,7 @@ today: any;
       return;
     }
 
+
     this.http.delete<any>(`http://192.168.50.202:3001/api/grupos/salir/${grupoId}/${userId}`)
       .subscribe(
         response => {
@@ -212,7 +267,7 @@ today: any;
   }
 
   actualizarDisponibilidad(groupId: number) {
-    this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
       .subscribe(
         (response) => {
           alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
@@ -233,7 +288,7 @@ today: any;
 
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
-    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/inactivar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -247,7 +302,7 @@ today: any;
 
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
-    this.http.put<any>(`http://192.168.50.202:3001/api/grupos/activar/${grupoId}`, {})
+    this.http.put<any>(`http://192.168.0.6:3001/api/grupos/activar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo activado correctamente');
