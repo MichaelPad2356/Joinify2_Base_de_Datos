@@ -73,7 +73,7 @@
                 {{ notif.mensaje }}
                 <span class="cerrar-notificacion" (click)="eliminarNotificacion(notif.id_notificacion)" title="Eliminar">&times;</span>
               </div>
-              <div class="notificacion-fecha">{{ notif.fecha_envio | date: 'short' }}</div>
+              <div class="notificacion-fecha">{{ notif.fecha_envio_formateada }}</div>
               @if (notif.estado === 'pendiente') {
                 <button class="marcar-leida-btn" (click)="marcarComoLeida(notif.id_notificacion)">
                   Marcar como leída
@@ -113,7 +113,7 @@
               💳 Pago ID #{{ pago.id_pago }} - Grupo {{ pago.id_grupo_suscripcion }}
             </div>
             <div class="notificacion-fecha">
-              {{ pago.fecha_pago | date: 'short' }}
+              {{ pago.fecha_pago_formateada }}
             </div>
           </div>
         </div>

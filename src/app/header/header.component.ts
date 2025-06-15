@@ -17,6 +17,7 @@ export class HeaderComponent implements OnInit {
   notificaciones: any[] = [];
   showPagosPopup = false;
   historialPagos: any[] = [];
+  datePipe = new DatePipe('es-MX');
 
   constructor(private router: Router, private http: HttpClient) { }
 
@@ -62,12 +63,24 @@ export class HeaderComponent implements OnInit {
     this.showNotificaciones = false;
   }
 
+  // Formatea la fecha a dd/MM/yyyy
+  formatFecha(fecha: string): string {
+    if (!fecha) return '';
+    return this.datePipe.transform(fecha, 'dd/MM/yyyy') || '';
+  }
+
   // Obtener notificaciones del usuario
   cargarNotificaciones() {
     const userId = localStorage.getItem('userId');
     if (userId) {
       this.http.get<any[]>(`http://localhost:3001/api/notificaciones/${userId}`)
-        .subscribe(data => this.notificaciones = data);
+        .subscribe(data => {
+          // Formatear la fecha de cada notificación
+          this.notificaciones = data.map(n => ({
+            ...n,
+            fecha_envio_formateada: this.formatFecha(n.fecha_envio)
+          }));
+        });
     }
   }
 
@@ -95,7 +108,13 @@ export class HeaderComponent implements OnInit {
     const userId = localStorage.getItem('userId');
     if (userId) {
       this.http.get<any[]>(`http://localhost:3001/api/historial_pagos?userId=${userId}`)
-        .subscribe(pagos => this.historialPagos = pagos);
+        .subscribe(pagos => {
+          // Formatear la fecha de cada pago
+          this.historialPagos = pagos.map(p => ({
+            ...p,
+            fecha_pago_formateada: this.formatFecha(p.fecha_pago)
+          }));
+        });
     }
   }
 
