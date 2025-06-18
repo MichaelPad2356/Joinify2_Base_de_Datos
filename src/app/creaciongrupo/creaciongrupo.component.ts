@@ -26,7 +26,7 @@ export class CreaciongrupoComponent {
   }
 
   loadServices() {
-    this.http.get<any[]>('http://192.168.50.202:3001/api/servicios').subscribe(
+    this.http.get<any[]>('http://192.168.50.203:3001/api/servicios').subscribe(
       data => {
         this.serviceList = data;
         console.log('Servicios cargados:', data); // Para debugging
@@ -57,7 +57,7 @@ export class CreaciongrupoComponent {
     };
 
 
-    this.http.post<{ id_grupo_suscripcion: number }>('http://192.168.50.202:3001/api/grupos/crear', grupoConUsuario)
+    this.http.post<{ id_grupo_suscripcion: number }>('http://192.168.50.203:3001/api/grupos/crear', grupoConUsuario)
 
       .subscribe(
         (response) => {

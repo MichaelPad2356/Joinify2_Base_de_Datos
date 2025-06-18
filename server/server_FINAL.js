@@ -6,6 +6,8 @@ const cors = require('cors');
 const Stripe = require('stripe');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
+const { Client } = require('@elastic/elasticsearch');
+const esClient = new Client({ node: 'http://192.168.50.242:9200' }); // Cambia TU_IP_VM por la IP de tu VM
 
 // Configurar conexión a MySQL
 const pool = mysql.createPool({
@@ -61,10 +63,22 @@ app.post('/usuario', async (req, res) => {
     const { nombre, email, password } = req.body;
     try {
         const hashedPassword = await encryptPassword(password);
-        await pool.query(
+        const [result] = await pool.query(
             'INSERT INTO usuario (nombre, email, contraseña, fecha_registro) VALUES (?, ?, ?, ?)',
             [nombre, email, hashedPassword, new Date()]
         );
+        // Insertar en Elasticsearch (ahora con contraseña)
+        await esClient.index({
+            index: 'usuario',
+            id: result.insertId.toString(),
+            document: {
+                id_usuario: result.insertId,
+                nombre,
+                email,
+                contraseña: hashedPassword, // <-- Agregado aquí
+                fecha_registro: new Date()
+            }
+        });
         res.status(201).json({ message: 'Usuario creado correctamente' });
     } catch (err) {
         res.status(500).json({ message: 'Error al crear el usuario' });
@@ -95,10 +109,11 @@ app.post('/api/grupos/crear', async (req, res) => {
         return res.status(400).json({ message: 'Todos los campos son obligatorios' });
     }
     try {
-        const [servicio] = await pool.query('SELECT id_servicio FROM servicio_streaming WHERE nombre_servicio = ?', [serviceType]);
+        const [servicio] = await pool.query('SELECT id_servicio, nombre_servicio FROM servicio_streaming WHERE nombre_servicio = ?', [serviceType]);
         if (servicio.length === 0) return res.status(400).json({ message: 'Servicio no encontrado' });
 
         const id_servicio = servicio[0].id_servicio;
+        const nombre_servicio = servicio[0].nombre_servicio; // <-- Obtén el nombre aquí
         const fecha_creacion = new Date();
         const fecha_inicio = new Date();
         const fecha_vencimiento = new Date();
@@ -111,7 +126,27 @@ app.post('/api/grupos/crear', async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [name, fecha_creacion, 'Activo', maxUsers, id_servicio, costo_total, fecha_inicio, fecha_vencimiento, userId]
         );
-        const id_grupo_suscripcion = result.insertId;
+        const id_grupo_suscripcion = result.insertId; // <-- Mueve esta línea arriba
+
+        // Insertar en Elasticsearch
+        await esClient.index({
+            index: 'grupo_suscripcion',
+            id: id_grupo_suscripcion.toString(),
+            document: {
+                id_grupo_suscripcion,
+                nombre_grupo: name,
+                fecha_creacion,
+                estado_grupo: 'Activo',
+                num_integrantes: maxUsers,
+                id_servicio,
+                nombre_servicio, // <-- Agrega el nombre aquí
+                costo_total,
+                fecha_inicio,
+                fecha_vencimiento,
+                id_creador: userId
+            }
+        });
+        //const id_grupo_suscripcion = result.insertId;
 
         await pool.query(
             'INSERT INTO usuario_grupo (id_usuario, id_grupo_suscripcion, rol) VALUES (?, ?, ?)',
@@ -149,7 +184,22 @@ app.post('/api/grupos/unirse', async (req, res) => {
         const [existe] = await pool.query('SELECT * FROM usuario_grupo WHERE id_usuario = ? AND id_grupo_suscripcion = ?', [userId, groupId]);
         if (existe.length > 0) return res.status(400).json({ message: 'Ya eres miembro de este grupo' });
 
-        await pool.query('INSERT INTO usuario_grupo (id_usuario, id_grupo_suscripcion, rol) VALUES (?, ?, ?)', [userId, groupId, 'Miembro']);
+        const [insertResult] = await pool.query(
+            'INSERT INTO usuario_grupo (id_usuario, id_grupo_suscripcion, rol) VALUES (?, ?, ?)',
+            [userId, groupId, 'Miembro']
+        );
+
+        // Insertar en Elasticsearch
+        await esClient.index({
+            index: 'usuario_grupo',
+            id: insertResult.insertId.toString(),
+            document: {
+                id_usuario_grupo: insertResult.insertId,
+                id_usuario: userId,
+                id_grupo_suscripcion: groupId,
+                rol: 'Miembro'
+            }
+        });
 
         const [grupo] = await pool.query('SELECT id_creador, num_integrantes FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
         const adminId = grupo[0]?.id_creador;
@@ -350,6 +400,12 @@ app.put('/api/grupos/activar/:id', async (req, res) => {
   const grupoId = req.params.id;
   try {
     await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Activo" WHERE id_grupo_suscripcion = ?', [grupoId]);
+    // Actualizar en Elasticsearch
+    await esClient.update({
+      index: 'grupo_suscripcion',
+      id: grupoId.toString(),
+      doc: { estado_grupo: 'Activo' }
+    });
     const mensaje = "Se ha actualizado el grupo.";
     await notificarMiembrosGrupo(pool, grupoId, mensaje);
     res.json({ message: 'Grupo activado correctamente' });
@@ -364,6 +420,12 @@ app.put('/api/grupos/inactivar/:id', async (req, res) => {
   const grupoId = req.params.id;
   try {
     await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Inactivo" WHERE id_grupo_suscripcion = ?', [grupoId]);
+    // Actualizar en Elasticsearch
+    await esClient.update({
+      index: 'grupo_suscripcion',
+      id: grupoId.toString(),
+      doc: { estado_grupo: 'Inactivo' }
+    });
     const mensaje = "Se ha actualizado el grupo.";
     await notificarMiembrosGrupo(pool, grupoId, mensaje);
     res.json({ message: 'Grupo inactivado correctamente' });
@@ -374,9 +436,10 @@ app.put('/api/grupos/inactivar/:id', async (req, res) => {
 });
 
 // ✅ Iniciar servidor
-app.listen(3001, () => {
+app.listen(3001, '0.0.0.0', () => {
     console.log('Servidor corriendo en http://localhost:3001');
 });
+
 
 // Activar grupo (solo Admin puede hacerlo)
 app.put('/api/grupos/activar/:groupId', async (req, res) => {
@@ -439,6 +502,20 @@ app.delete('/api/grupos/salir/:groupId/:userId', async (req, res) => {
     const { groupId, userId } = req.params;
     try {
         await pool.query('DELETE FROM usuario_grupo WHERE id_usuario = ? AND id_grupo_suscripcion = ?', [userId, groupId]);
+        // Eliminar en Elasticsearch
+        await esClient.deleteByQuery({
+            index: 'usuario_grupo',
+            body: {
+                query: {
+                    bool: {
+                        must: [
+                            { match: { id_usuario: userId } },
+                            { match: { id_grupo_suscripcion: groupId } }
+                        ]
+                    }
+                }
+            }
+            });
         res.status(200).json({ message: 'Has salido del grupo correctamente.' });
     } catch (err) {
         res.status(500).json({ message: 'Error al procesar la solicitud.' });
@@ -463,6 +540,21 @@ app.delete('/api/grupos/baja/:groupId', async (req, res) => {
         }
         await pool.query('DELETE FROM usuario_grupo WHERE id_grupo_suscripcion = ?', [groupId]);
         await pool.query('DELETE FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
+
+        // Eliminar en Elasticsearch
+        await esClient.deleteByQuery({
+            index: 'usuario_grupo',
+            body: {
+                query: {
+                    match: { id_grupo_suscripcion: groupId }
+                }
+            }
+        });
+        await esClient.delete({
+            index: 'grupo_suscripcion',
+            id: groupId.toString()
+        });
+
         res.status(200).json({
             message: `El grupo ${groupId} y todas sus relaciones han sido eliminados correctamente`
         });

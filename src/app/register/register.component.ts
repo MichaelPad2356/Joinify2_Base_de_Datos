@@ -56,7 +56,7 @@ export class RegisterComponent {
       );*/
 
 
-      this.http.post('http://192.168.50.202:3001/usuario', userData)
+      this.http.post('http://192.168.50.203:3001/usuario', userData)
 
       .subscribe(
         (response: any) => {
