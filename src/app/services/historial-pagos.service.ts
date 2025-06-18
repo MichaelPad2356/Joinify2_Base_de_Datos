@@ -7,7 +7,7 @@ import { HistorialPago } from '../models/historial-pago.model';
   providedIn: 'root'
 })
 export class HistorialPagosService {
-  private readonly apiUrl = 'http://192.168.50.202:3001/api/historial_pagos';
+  private readonly apiUrl = 'http://192.168.50.203:3001/api/historial_pagos';
 
   constructor(private http: HttpClient) {}
 
