@@ -4,6 +4,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { HistorialPago } from '../models/historial-pago.model';
 import { HistorialPagosService } from '../services/historial-pagos.service';
 import { CommonModule } from '@angular/common';
+import { environment } from '../app.config';
 
 
 @Component({
@@ -43,7 +44,7 @@ today: any;
       return;
     }
 
-    this.http.get<any[]>(`http://192.168.50.203:3001/api/grupos/usuario?id_usuario=${usuarioId}`)
+    this.http.get<any[]>(`${environment.apiUrl}/api/grupos/usuario?id_usuario=${usuarioId}`)
       .subscribe(
         (grupos) => {
 
@@ -70,7 +71,7 @@ today: any;
         }
       );
 
-    this.http.get<any[]>(`http://192.168.50.203:3001/api/notificaciones/vencimientos`)
+    this.http.get<any[]>(`${environment.apiUrl}/api/notificaciones/vencimientos`)
       .subscribe(
         (notificaciones) => { 
           this.notificaciones = notificaciones.filter(n => n.userId === parseInt(usuarioId || '0'));
@@ -89,7 +90,7 @@ today: any;
 
      // Obtener las notificaciones inicialmente
 
-     this.http.get<any[]>(`http://192.168.50.203:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`${environment.apiUrl}/api/notificaciones/vencimientos`)
 
      .subscribe(
        (notificaciones) => { 
@@ -112,7 +113,7 @@ today: any;
    // Llamada periódica cada 10 minutos (600,000 ms)
    this.notificacionesInterval = setInterval(() => {
 
-     this.http.get<any[]>(`http://192.168.50.203:3001/api/notificaciones/vencimientos`)
+     this.http.get<any[]>(`${environment.apiUrl}/api/notificaciones/vencimientos`)
 
        .subscribe(
          (notificaciones) => { 
@@ -168,7 +169,7 @@ today: any;
 
   
 
-    this.http.post(`http://192.168.50.203:3001/api/pagos/simular`, {
+    this.http.post(`${environment.apiUrl}/api/pagos/simular`, {
 
       userId: userId,      // Asegúrate de enviar el userId
       groupId: grupoId,    // Enviar el ID del grupo
@@ -209,7 +210,7 @@ today: any;
       } else {
         if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
           const userId = localStorage.getItem('userId');
-          this.http.post(`http://192.168.50.203:3001/api/pagos/confirmar`, {
+          this.http.post(`${environment.apiUrl}/api/pagos/confirmar`, {
             userId: userId,
             groupId: grupoId,
             monto: monto
@@ -233,7 +234,7 @@ today: any;
 
     if (!confirmacion) return;
 
-    this.http.delete<any>(`http://192.168.50.203:3001/api/grupos/baja/${grupoId}`)
+    this.http.delete<any>(`${environment.apiUrl}/api/grupos/baja/${grupoId}`)
 
       .subscribe(
         response => {
@@ -257,7 +258,7 @@ today: any;
     }
 
 
-    this.http.delete<any>(`http://192.168.50.203:3001/api/grupos/salir/${grupoId}/${userId}`)
+    this.http.delete<any>(`${environment.apiUrl}/api/grupos/salir/${grupoId}/${userId}`)
 
       .subscribe(
         response => {
@@ -276,7 +277,7 @@ today: any;
 
   // actualizarDisponibilidad(groupId: number) {
 
-  //   this.http.put<any>(`http://192.168.50.202:3001/api/servicio-suscripcion/actualizar/${groupId}`, {})
+  //   this.http.put<any>(`${environment.apiUrl}/api/servicio-suscripcion/actualizar/${groupId}`, {})
   //     .subscribe(
   //       (response) => {
   //         alert(`La disponibilidad del grupo ${groupId} se actualizó a: ${response.disponibilidad}`);
@@ -298,7 +299,7 @@ today: any;
   inactivarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas inactivar este grupo?')) return;
 
-    this.http.put<any>(`http://192.168.50.203:3001/api/grupos/inactivar/${grupoId}`, {})
+    this.http.put<any>(`${environment.apiUrl}/api/grupos/inactivar/${grupoId}`, {})
       .subscribe(
         response => {
           alert('Grupo inactivado correctamente');
@@ -313,7 +314,7 @@ today: any;
   activarGrupo(grupoId: number): void {
     if (!confirm('¿Seguro que deseas activar este grupo?')) return;
 
-    this.http.put<any>(`http://192.168.50.203:3001/api/grupos/activar/${grupoId}`, {})
+    this.http.put<any>(`${environment.apiUrl}/api/grupos/activar/${grupoId}`, {})
 
       .subscribe(
         response => {
@@ -326,3 +327,4 @@ today: any;
       );
   }
 }
+

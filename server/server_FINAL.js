@@ -6,8 +6,6 @@ const cors = require('cors');
 const Stripe = require('stripe');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcrypt');
-const { Client } = require('@elastic/elasticsearch');
-const esClient = new Client({ node: 'http://192.168.50.242:9200' }); // Cambia TU_IP_VM por la IP de tu VM
 
 // Configurar conexión a MySQL
 const pool = mysql.createPool({
@@ -67,18 +65,6 @@ app.post('/usuario', async (req, res) => {
             'INSERT INTO usuario (nombre, email, contraseña, fecha_registro) VALUES (?, ?, ?, ?)',
             [nombre, email, hashedPassword, new Date()]
         );
-        // Insertar en Elasticsearch (ahora con contraseña)
-        await esClient.index({
-            index: 'usuario',
-            id: result.insertId.toString(),
-            document: {
-                id_usuario: result.insertId,
-                nombre,
-                email,
-                contraseña: hashedPassword, // <-- Agregado aquí
-                fecha_registro: new Date()
-            }
-        });
         res.status(201).json({ message: 'Usuario creado correctamente' });
     } catch (err) {
         res.status(500).json({ message: 'Error al crear el usuario' });
@@ -113,7 +99,7 @@ app.post('/api/grupos/crear', async (req, res) => {
         if (servicio.length === 0) return res.status(400).json({ message: 'Servicio no encontrado' });
 
         const id_servicio = servicio[0].id_servicio;
-        const nombre_servicio = servicio[0].nombre_servicio; // <-- Obtén el nombre aquí
+        const nombre_servicio = servicio[0].nombre_servicio;
         const fecha_creacion = new Date();
         const fecha_inicio = new Date();
         const fecha_vencimiento = new Date();
@@ -126,27 +112,7 @@ app.post('/api/grupos/crear', async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [name, fecha_creacion, 'Activo', maxUsers, id_servicio, costo_total, fecha_inicio, fecha_vencimiento, userId]
         );
-        const id_grupo_suscripcion = result.insertId; // <-- Mueve esta línea arriba
-
-        // Insertar en Elasticsearch
-        await esClient.index({
-            index: 'grupo_suscripcion',
-            id: id_grupo_suscripcion.toString(),
-            document: {
-                id_grupo_suscripcion,
-                nombre_grupo: name,
-                fecha_creacion,
-                estado_grupo: 'Activo',
-                num_integrantes: maxUsers,
-                id_servicio,
-                nombre_servicio, // <-- Agrega el nombre aquí
-                costo_total,
-                fecha_inicio,
-                fecha_vencimiento,
-                id_creador: userId
-            }
-        });
-        //const id_grupo_suscripcion = result.insertId;
+        const id_grupo_suscripcion = result.insertId;
 
         await pool.query(
             'INSERT INTO usuario_grupo (id_usuario, id_grupo_suscripcion, rol) VALUES (?, ?, ?)',
@@ -188,18 +154,6 @@ app.post('/api/grupos/unirse', async (req, res) => {
             'INSERT INTO usuario_grupo (id_usuario, id_grupo_suscripcion, rol) VALUES (?, ?, ?)',
             [userId, groupId, 'Miembro']
         );
-
-        // Insertar en Elasticsearch
-        await esClient.index({
-            index: 'usuario_grupo',
-            id: insertResult.insertId.toString(),
-            document: {
-                id_usuario_grupo: insertResult.insertId,
-                id_usuario: userId,
-                id_grupo_suscripcion: groupId,
-                rol: 'Miembro'
-            }
-        });
 
         const [grupo] = await pool.query('SELECT id_creador, num_integrantes FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
         const adminId = grupo[0]?.id_creador;
@@ -380,7 +334,6 @@ app.get('/api/historial_pagos', async (req, res) => {
   }
 });
 
-
 // ✅ Función para notificar a todos los miembros del grupo
 async function notificarMiembrosGrupo(pool, grupoId, mensaje) {
   const [miembros] = await pool.query(
@@ -400,12 +353,6 @@ app.put('/api/grupos/activar/:id', async (req, res) => {
   const grupoId = req.params.id;
   try {
     await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Activo" WHERE id_grupo_suscripcion = ?', [grupoId]);
-    // Actualizar en Elasticsearch
-    await esClient.update({
-      index: 'grupo_suscripcion',
-      id: grupoId.toString(),
-      doc: { estado_grupo: 'Activo' }
-    });
     const mensaje = "Se ha actualizado el grupo.";
     await notificarMiembrosGrupo(pool, grupoId, mensaje);
     res.json({ message: 'Grupo activado correctamente' });
@@ -420,12 +367,6 @@ app.put('/api/grupos/inactivar/:id', async (req, res) => {
   const grupoId = req.params.id;
   try {
     await pool.query('UPDATE grupo_suscripcion SET estado_grupo = "Inactivo" WHERE id_grupo_suscripcion = ?', [grupoId]);
-    // Actualizar en Elasticsearch
-    await esClient.update({
-      index: 'grupo_suscripcion',
-      id: grupoId.toString(),
-      doc: { estado_grupo: 'Inactivo' }
-    });
     const mensaje = "Se ha actualizado el grupo.";
     await notificarMiembrosGrupo(pool, grupoId, mensaje);
     res.json({ message: 'Grupo inactivado correctamente' });
@@ -434,12 +375,6 @@ app.put('/api/grupos/inactivar/:id', async (req, res) => {
     res.status(500).json({ message: 'Error al inactivar el grupo' });
   }
 });
-
-// ✅ Iniciar servidor
-app.listen(3001, '0.0.0.0', () => {
-    console.log('Servidor corriendo en http://localhost:3001');
-});
-
 
 // Activar grupo (solo Admin puede hacerlo)
 app.put('/api/grupos/activar/:groupId', async (req, res) => {
@@ -455,7 +390,6 @@ app.put('/api/grupos/activar/:groupId', async (req, res) => {
     }
 });
 
-
 // Obtener todos los servicios de streaming
 app.get('/api/servicios', async (req, res) => {
     try {
@@ -466,56 +400,11 @@ app.get('/api/servicios', async (req, res) => {
     }
 });
 
-/* ============================================================
- *  Historial de pagos
- *  GET /api/historial_pagos
- *      - Sin parámetros ⇒ devuelve TODOS los registros.
- *      - ?grupoId=###   ⇒ filtra por id_grupo_suscripcion.
- *      - ?pagoId=###    ⇒ filtra por id_pago.
- * ============================================================ */
-app.get('/api/historial_pagos', async (req, res) => {
-    const { userId } = req.query;
-
-    if (!userId) {
-        return res.status(400).json({ message: 'userId requerido' });
-    }
-
-    const sql = `
-        SELECT hp.id_historial_pago, hp.id_pago, hp.id_grupo_suscripcion
-        FROM historial_pagos hp
-        JOIN grupo_suscripcion gs ON gs.id_grupo_suscripcion = hp.id_grupo_suscripcion
-        JOIN usuario_grupo ug ON ug.id_grupo_suscripcion = gs.id_grupo_suscripcion
-        WHERE ug.id_usuario = ?
-    `;
-
-    try {
-        const [rows] = await pool.query(sql, [userId]);
-        res.json(rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Error al obtener el historial de pagos' });
-    }
-});
-
 // Salir de un grupo
 app.delete('/api/grupos/salir/:groupId/:userId', async (req, res) => {
     const { groupId, userId } = req.params;
     try {
         await pool.query('DELETE FROM usuario_grupo WHERE id_usuario = ? AND id_grupo_suscripcion = ?', [userId, groupId]);
-        // Eliminar en Elasticsearch
-        await esClient.deleteByQuery({
-            index: 'usuario_grupo',
-            body: {
-                query: {
-                    bool: {
-                        must: [
-                            { match: { id_usuario: userId } },
-                            { match: { id_grupo_suscripcion: groupId } }
-                        ]
-                    }
-                }
-            }
-            });
         res.status(200).json({ message: 'Has salido del grupo correctamente.' });
     } catch (err) {
         res.status(500).json({ message: 'Error al procesar la solicitud.' });
@@ -541,24 +430,15 @@ app.delete('/api/grupos/baja/:groupId', async (req, res) => {
         await pool.query('DELETE FROM usuario_grupo WHERE id_grupo_suscripcion = ?', [groupId]);
         await pool.query('DELETE FROM grupo_suscripcion WHERE id_grupo_suscripcion = ?', [groupId]);
 
-        // Eliminar en Elasticsearch
-        await esClient.deleteByQuery({
-            index: 'usuario_grupo',
-            body: {
-                query: {
-                    match: { id_grupo_suscripcion: groupId }
-                }
-            }
-        });
-        await esClient.delete({
-            index: 'grupo_suscripcion',
-            id: groupId.toString()
-        });
-
         res.status(200).json({
             message: `El grupo ${groupId} y todas sus relaciones han sido eliminados correctamente`
         });
     } catch (err) {
         res.status(500).json({ message: 'Error al procesar la solicitud' });
     }
+});
+
+// ✅ Iniciar servidor
+app.listen(3001, '0.0.0.0', () => {
+    console.log('Servidor corriendo en http://localhost:3001');
 });

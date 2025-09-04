@@ -3,6 +3,7 @@ import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { environment } from '../app.config';
 
 @Component({
   selector: 'app-creaciongrupo',
@@ -26,7 +27,7 @@ export class CreaciongrupoComponent {
   }
 
   loadServices() {
-    this.http.get<any[]>('http://192.168.50.203:3001/api/servicios').subscribe(
+    this.http.get<any[]>(`${environment.apiUrl}/api/servicios`).subscribe(
       data => {
         this.serviceList = data;
         console.log('Servicios cargados:', data); // Para debugging
@@ -57,7 +58,7 @@ export class CreaciongrupoComponent {
     };
 
 
-    this.http.post<{ id_grupo_suscripcion: number }>('http://192.168.50.203:3001/api/grupos/crear', grupoConUsuario)
+    this.http.post<{ id_grupo_suscripcion: number }>(`${environment.apiUrl}/api/grupos/crear`, grupoConUsuario)
 
       .subscribe(
         (response) => {

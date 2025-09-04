@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../app.config';
 
 @Component({
   selector: 'app-login',
@@ -21,7 +22,7 @@ export class LoginComponent {
   // Lógica para manejar el envío de los datos de login
   onLoginSubmit(): void {
 
-    const url = 'http://192.168.50.203:3001/login';  // Cambia a tu endpoint de login
+    const url = `${environment.apiUrl}/login`;  // Cambia a tu endpoint de login
 
 
     this.http.post<{ userId: number, userName: string }>(url, this.loginData).subscribe(
