@@ -2,6 +2,7 @@ import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../app.config';
 
 @Component({
   selector: 'app-register',
@@ -56,7 +57,7 @@ export class RegisterComponent {
       );*/
 
 
-      this.http.post('http://192.168.50.203:3001/usuario', userData)
+      this.http.post(`${environment.apiUrl}/usuario`, userData)
 
       .subscribe(
         (response: any) => {

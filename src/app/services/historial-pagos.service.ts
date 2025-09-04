@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { HistorialPago } from '../models/historial-pago.model';
+import { environment } from '../app.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HistorialPagosService {
-  private readonly apiUrl = 'http://192.168.50.203:3001/api/historial_pagos';
+  private readonly apiUrl = `${environment.apiUrl}/api/historial_pagos`;
 
   constructor(private http: HttpClient) {}
 

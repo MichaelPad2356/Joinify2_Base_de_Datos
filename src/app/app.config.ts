@@ -11,3 +11,9 @@ export const appConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'es-MX' }
   ]
 };
+
+// Configuración global de la API
+export const environment = {
+  apiUrl: 'http://172.16.135.189:3001' 
+};
+
